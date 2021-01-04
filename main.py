@@ -47,7 +47,7 @@ class Tile(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, angle, group, speed, whos):
         super().__init__(group, all_sprites)
-        self.image = pygame.Surface([10, 10])
+        self.image = pygame.Surface([10, 10], pygame.SRCALPHA)
         pygame.draw.circle(self.image, "red", (5, 5), 5)
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.speed = speed
@@ -109,7 +109,7 @@ clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 player_sprites = pygame.sprite.Group()
 bullet_sprites = pygame.sprite.Group()
-player = Player(500, 100, 0, player_sprites)
+player = Player(500, 300, 0, player_sprites)
 timer = 0
 map_sprites = draw_map(map)
 camera = Camera()
@@ -126,11 +126,19 @@ while True:
                        player)
     timer += 1
     timer = timer % 100
-    player_sprites.update()
+    if not pygame.sprite.spritecollideany(player, map_sprites):
+        player_sprites.update()
+    else:
+        pass
+        print(pygame.sprite.spritecollideany(player, map_sprites).rect.topright)
+        player.rect.x = list(pygame.sprite.spritecollideany(player, map_sprites).rect.topright)[0]
+        player.rect.y = list(pygame.sprite.spritecollideany(player, map_sprites).rect.topright)[1]
     bullet_sprites.update()
     map_sprites.draw(screen)
     all_sprites.draw(screen)
     camera.update(player)
+    for x in map_sprites:
+        pygame.sprite.spritecollide(x, bullet_sprites, True)
     bullet_sprites.draw(screen)
     for x in all_sprites:
         camera.apply(x)
