@@ -7,6 +7,16 @@ import random
 from main import *
 
 
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    return image
+
+
 class Gun(pygame.sprite.Sprite):
     def __init__(self, image_name, pos_x, pos_y, angle, group):
         super().__init__(group, all_sprites)
@@ -14,15 +24,10 @@ class Gun(pygame.sprite.Sprite):
         self.angle = angle
         self.coords = pos_x, pos_y
 
-    def get_angle(self):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        rel_x, rel_y = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
-                self.rect.y + self.rect.size[1] // 2)
-        self.angle = math.atan2(rel_y, rel_x)
-        return self.angle
 
     def update(self, player):
         self.x, self.y = player.rect.centerx, player.rect.recty
+        self.angle = player.angle
         self.image = pygame.transform.rotate(self.image, self.get_angle() / math.pi * 180)
 
 

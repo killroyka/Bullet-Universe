@@ -5,7 +5,30 @@ import math
 from pprint import pprint
 import random
 from map import *
-from guns import *
+
+
+class Gun(pygame.sprite.Sprite):
+    def __init__(self, image_name, pos_x, pos_y, angle, group):
+        super().__init__(group, all_sprites)
+        self.image = load_image(image_name)
+        self.angle = angle
+        self.coords = pos_x, pos_y
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
+
+    def update(self, player):
+        self.x, self.y = player.rect.centerx, player.rect.centery
+        self.angle = player.angle
+        self.image = pygame.transform.rotate(self.image, self.angle / math.pi * 180)
+
+
+class ShotGun(Gun):
+    def shot(self):
+        for x in range(-4, 3):
+            Bullet(player.rect.x + player.rect.size[0] // 2, player.rect.y + player.rect.size[1] // 2,
+                   player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
+                   random.randint(25, 30),
+                   player)
+
 
 def draw_map(map):
     map_sprites = pygame.sprite.Group()
@@ -144,7 +167,7 @@ class Player(pygame.sprite.Sprite):
             self.speed = 7
         else:
             self.speed = 10
-        if keys[pygame.K_w] and j == 'NoneType' and  j.image_name != "wall_textures/up_wall.png" and j.reverse_y:
+        if keys[pygame.K_w] and j == 'NoneType' and j.image_name != "wall_textures/up_wall.png" and j.reverse_y:
             self.rect.y += -self.speed
         if keys[pygame.K_s]:
             self.rect.y += self.speed
@@ -168,7 +191,9 @@ enemies_sprites = pygame.sprite.Group()
 Spin_bot(500, 500, enemies_sprites, player)
 
 map_sprites = draw_map(map)
-shot_gun
+
+guns_sprites = pygame.sprite.Group()
+shotgun = ShotGun("magnum.png", player.rect.centerx, player.rect.centery, player.angle, guns_sprites)
 while True:
     screen.fill("black")
     for event in pygame.event.get():
@@ -186,6 +211,7 @@ while True:
     all_sprites.draw(screen)
     camera.update(player)
     bullet_sprites.update()
+    guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
     for x in map_sprites:
