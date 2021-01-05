@@ -13,12 +13,18 @@ class Gun(pygame.sprite.Sprite):
         self.image = load_image(image_name)
         self.angle = angle
         self.coords = pos_x, pos_y
+        self.last_angle = 0
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
+    def rotate(self, img, pos, angle):
+        w, h = img.get_size()
+        img2 = pygame.Surface((w * 2, h * 2), pygame.SRCALPHA)
+        img2.blit(img, (w - pos[0], h - pos[1]))
+        return pygame.transform.rotate(img2, angle)
+
     def update(self, player):
-        self.x, self.y = player.rect.centerx, player.rect.centery
-        self.angle = player.angle
-        self.image = pygame.transform.rotate(self.image, self.angle / math.pi * 180)
+        self.image = self.rotate(self.image, player.rect.center, player.angle - self.last_angle / math.pi * 180)
+        self.last_angle = player.angle
 
 
 class ShotGun(Gun):
