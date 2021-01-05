@@ -10,7 +10,6 @@ from map import *
 def draw_map(map):
     map_sprites = pygame.sprite.Group()
     corner_sprites = pygame.sprite.Group()
-    pprint.pprint(map)
     for x in range(1, len(map) - 1):
         for y in range(1, len(map[0]) - 1):
             if map[x][y] == "#" and map[x][y - 1] == ".":
@@ -32,8 +31,7 @@ def draw_map(map):
                 Tile("wall_textures/UR_wall.png", y, x, corner_sprites)
     for x in map_sprites:
         pygame.sprite.spritecollide(x, corner_sprites, True)
-    for x in corner_sprites:
-        map_sprites.add(corner_sprites)
+    map_sprites.add(corner_sprites)
     return map_sprites
 
 
@@ -45,6 +43,13 @@ def load_image(name, colorkey=None):
         sys.exit()
     image = pygame.image.load(fullname)
     return image
+
+
+def draw_FPS(screen):
+    font = pygame.font.Font(None, 50)
+    text = font.render(str(int(clock.get_fps())), True, (100, 255, 100))
+    text_x = size[0] - text.get_width()
+    screen.blit(text, (text_x, 0))
 
 
 class Spin_bot(pygame.sprite.Sprite):
@@ -76,6 +81,7 @@ class Spin_bot(pygame.sprite.Sprite):
 class Tile(pygame.sprite.Sprite):
     def __init__(self, image_name, pos_x, pos_y, group, reverse_x=False, reverse_y=False):
         super().__init__(group, all_sprites)
+        self.image_name = image_name
         self.image = load_image(image_name)
         self.image = pygame.transform.flip(self.image, reverse_x, reverse_y)
         self.rect = self.image.get_rect()
@@ -129,12 +135,16 @@ class Player(pygame.sprite.Sprite):
                 self.rect.y + self.rect.size[1] // 2)
         self.angle = math.atan2(rel_y, rel_x)
         keys = pygame.key.get_pressed()
-        print([keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1))
+        for x in map_sprites:
+            j = pygame.sprite.collide_mask(self, x)
+            if j:
+                j = x
+                break
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
             self.speed = 7
         else:
             self.speed = 10
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] and j == 'NoneType' and  j.image_name != "wall_textures/up_wall.png" and j.reverse_y:
             self.rect.y += -self.speed
         if keys[pygame.K_s]:
             self.rect.y += self.speed
@@ -144,7 +154,8 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += self.speed
 
 
-size = width, height = 1600, 720
+pygame.init()
+size = width, height = 1600, 1080
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
@@ -152,10 +163,12 @@ player_sprites = pygame.sprite.Group()
 bullet_sprites = pygame.sprite.Group()
 player = Player(500, 300, 0, player_sprites)
 timer = 0
-map_sprites = draw_map(map)
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
 Spin_bot(500, 500, enemies_sprites, player)
+
+map_sprites = draw_map(map)
+
 while True:
     screen.fill("black")
     for event in pygame.event.get():
@@ -169,17 +182,15 @@ while True:
                        player)
     timer += 1
     timer = timer % 1000
-    if not pygame.sprite.spritecollideany(player, map_sprites):
-        player_sprites.update()
-    map_sprites.draw(screen)
+    player_sprites.update()
     all_sprites.draw(screen)
     camera.update(player)
-    bullet_sprites.draw(screen)
     bullet_sprites.update()
     enemies_sprites.update(player)
+    draw_FPS(screen)
     for x in map_sprites:
         pygame.sprite.spritecollide(x, bullet_sprites, True)
     for x in all_sprites:
         camera.apply(x)
-    clock.tick(30)
+    clock.tick(60)
     pygame.display.flip()
