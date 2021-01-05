@@ -5,7 +5,7 @@ import math
 from pprint import pprint
 import random
 from map import *
-
+from guns import *
 
 def draw_map(map):
     map_sprites = pygame.sprite.Group()
@@ -168,7 +168,7 @@ enemies_sprites = pygame.sprite.Group()
 Spin_bot(500, 500, enemies_sprites, player)
 
 map_sprites = draw_map(map)
-
+shot_gun
 while True:
     screen.fill("black")
     for event in pygame.event.get():

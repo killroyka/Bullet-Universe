@@ -21,7 +21,8 @@ class Gun(pygame.sprite.Sprite):
         self.angle = math.atan2(rel_y, rel_x)
         return self.angle
 
-    def update(self):
+    def update(self, player):
+        self.x, self.y = player.rect.centerx, player.rect.recty
         self.image = pygame.transform.rotate(self.image, self.get_angle() / math.pi * 180)
 
 
