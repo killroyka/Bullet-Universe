@@ -227,7 +227,7 @@ while True:
                        player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
                        random.randint(25, 30),
                        player)
-                sounds.shotgun_shot().play()
+                sounds.shotgun_shot()
     timer += 1
     timer = timer % 1000
     player_sprites.update()
@@ -240,7 +240,7 @@ while True:
     for x in map_sprites:
         j = pygame.sprite.spritecollide(x, bullet_sprites, True)
         for y in range(len(j)):
-            sounds.hit().play()
+            sounds.hit()
     for x in all_sprites:
         camera.apply(x)
     clock.tick(60)
