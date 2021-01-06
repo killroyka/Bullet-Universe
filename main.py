@@ -221,13 +221,7 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            for x in range(-4, 3):
-                Bullet(player.rect.centerx, player.rect.centery,
-                       player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
-                       random.randint(25, 30),
-                       player)
-                sounds.shotgun_shot()
+
     timer += 1
     timer = timer % 1000
     player_sprites.update()
@@ -237,6 +231,14 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
+    print(pygame.mouse.get_pressed(3))
+    if pygame.mouse.get_pressed(3)[0] and timer % 10 == 0:
+        for x in range(-4, 3):
+            Bullet(player.rect.centerx, player.rect.centery,
+                   player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
+                   random.randint(25, 30),
+                   player)
+            sounds.shotgun_shot()
     for x in map_sprites:
         j = pygame.sprite.spritecollide(x, bullet_sprites, True)
         for y in range(len(j)):
