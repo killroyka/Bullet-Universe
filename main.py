@@ -238,7 +238,9 @@ while True:
     enemies_sprites.update(player)
     draw_FPS(screen)
     for x in map_sprites:
-        pygame.sprite.spritecollide(x, bullet_sprites, True)
+        j = pygame.sprite.spritecollide(x, bullet_sprites, True)
+        for y in range(len(j)):
+            sounds.hit().play()
     for x in all_sprites:
         camera.apply(x)
     clock.tick(60)
