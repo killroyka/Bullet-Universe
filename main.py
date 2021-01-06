@@ -215,7 +215,7 @@ pygame.mixer.music.load('data/sounds/soundtrack.wav')
 pygame.mixer.music.play(-1)
 #
 sounds = Sounds()
-
+shot_timer = 0
 while True:
     screen.fill("black")
     for event in pygame.event.get():
@@ -231,18 +231,17 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
-    print(pygame.mouse.get_pressed(3))
-    if pygame.mouse.get_pressed(3)[0] and timer % 10 == 0:
+    if pygame.mouse.get_pressed(3)[0] and shot_timer >= 50:
         for x in range(-4, 3):
             Bullet(player.rect.centerx, player.rect.centery,
                    player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
                    random.randint(25, 30),
                    player)
             sounds.shotgun_shot()
+            shot_timer = 0
+    shot_timer += 1
     for x in map_sprites:
         j = pygame.sprite.spritecollide(x, bullet_sprites, True)
-        for y in range(len(j)):
-            sounds.hit()
     for x in all_sprites:
         camera.apply(x)
     clock.tick(60)
