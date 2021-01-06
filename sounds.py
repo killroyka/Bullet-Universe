@@ -1,5 +1,3 @@
-from main import *
-
 from pygame import mixer
 
 
