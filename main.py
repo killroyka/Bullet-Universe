@@ -5,6 +5,7 @@ import math
 from pprint import pprint
 import random
 from map import *
+from sounds import *
 
 
 class Gun(pygame.sprite.Sprite):
@@ -208,17 +209,19 @@ Spin_bot(500, 500, enemies_sprites, player)
 map_sprites = draw_map(map)
 
 guns_sprites = pygame.sprite.Group()
+
+# саундтрек
+pygame.mixer.music.load('data/sounds/soundtrack.wav')
+pygame.mixer.music.play(-1)
+#
+sounds = Sounds()
+shot_timer = 0
 while True:
     screen.fill("black")
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            for x in range(-4, 3):
-                Bullet(player.rect.centerx, player.rect.centery,
-                       player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
-                       random.randint(25, 30),
-                       player)
+
     timer += 1
     timer = timer % 1000
     player_sprites.update()
@@ -228,8 +231,17 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
+    if pygame.mouse.get_pressed(3)[0] and shot_timer >= 50:
+        for x in range(-4, 3):
+            Bullet(player.rect.centerx, player.rect.centery,
+                   player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
+                   random.randint(25, 30),
+                   player)
+            sounds.shotgun_shot()
+            shot_timer = 0
+    shot_timer += 1
     for x in map_sprites:
-        pygame.sprite.spritecollide(x, bullet_sprites, True)
+        j = pygame.sprite.spritecollide(x, bullet_sprites, True)
     for x in all_sprites:
         camera.apply(x)
     clock.tick(60)
