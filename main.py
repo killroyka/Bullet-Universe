@@ -5,7 +5,6 @@ import math
 from pprint import pprint
 import random
 from map import *
-from time import sleep as sl
 
 
 class Gun(pygame.sprite.Sprite):
@@ -204,7 +203,7 @@ player = Player(500, 300, 0, player_sprites)
 timer = 0
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
-# Spin_bot(500, 500, enemies_sprites, player)
+Spin_bot(500, 500, enemies_sprites, player)
 
 map_sprites = draw_map(map)
 
@@ -230,9 +229,7 @@ while True:
     enemies_sprites.update(player)
     draw_FPS(screen)
     for x in map_sprites:
-        i = pygame.sprite.spritecollide(x, bullet_sprites, True)
-        for y in range(len(i)):
-            print(i[y])
+        pygame.sprite.spritecollide(x, bullet_sprites, True)
     for x in all_sprites:
         camera.apply(x)
     clock.tick(60)
