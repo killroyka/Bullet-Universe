@@ -110,6 +110,8 @@ class Spin_bot(pygame.sprite.Sprite):
 class Tile(pygame.sprite.Sprite):
     def __init__(self, image_name, pos_x, pos_y, group, reverse_x=False, reverse_y=False):
         super().__init__(group, all_sprites)
+        self.reverse_y = reverse_y
+        self.reverse_x = reverse_x
         self.image_name = image_name
         self.image = load_image(image_name)
         self.image = pygame.transform.flip(self.image, reverse_x, reverse_y)
@@ -164,22 +166,29 @@ class Player(pygame.sprite.Sprite):
                 self.rect.y + self.rect.size[1] // 2)
         self.angle = math.atan2(rel_y, rel_x)
         keys = pygame.key.get_pressed()
+        collision = [0, 0, 0, 0]
         for x in map_sprites:
             j = pygame.sprite.collide_mask(self, x)
             if j:
-                j = x
-                break
+                if x.image_name == "wall_textures/up_wall.png" and not x.reverse_y:
+                    collision[0] = 1
+                if x.image_name == "wall_textures/up_wall.png" and x.reverse_y:
+                    collision[1] = 1
+                if x.image_name == "wall_textures/side_wall.png" and not x.reverse_x:
+                    collision[2] = 1
+                if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
+                    collision[3] = 1
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
             self.speed = 7
         else:
             self.speed = 10
-        if keys[pygame.K_w] and j == 'NoneType' and j.image_name != "wall_textures/up_wall.png" and j.reverse_y:
+        if keys[pygame.K_w] and not collision[0]:
             self.rect.y += -self.speed
-        if keys[pygame.K_s]:
+        if keys[pygame.K_s] and not collision[1]:
             self.rect.y += self.speed
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] and not collision[2]:
             self.rect.x += -self.speed
-        if keys[pygame.K_d]:
+        if keys[pygame.K_d] and not collision[3]:
             self.rect.x += self.speed
 
 
@@ -199,7 +208,6 @@ Spin_bot(500, 500, enemies_sprites, player)
 map_sprites = draw_map(map)
 
 guns_sprites = pygame.sprite.Group()
-shotgun = ShotGun("magnum.png", player.rect.centerx, player.rect.centery, player.angle, guns_sprites)
 while True:
     screen.fill("black")
     for event in pygame.event.get():
