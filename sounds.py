@@ -8,5 +8,6 @@ class Sounds:
         return shotgun_shot_sound.play()
 
     def hit(self):
-        hit_sound = mixer.Sound("data/sounds/shot.wav")
+        hit_sound_file = "data/sounds/hit.wav"
+        hit_sound = mixer.Sound(hit_sound_file)
         return hit_sound.play()
