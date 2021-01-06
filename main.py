@@ -82,7 +82,7 @@ def draw_FPS(screen):
     screen.blit(text, (text_x, 0))
 
 
-class Spin_bot(pygame.sprite.Sprite):
+class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, group, player):
         super().__init__(group, all_sprites)
         self.images = [load_image("spinbotAnimation/spinbotanimation_1.png"),
@@ -92,6 +92,7 @@ class Spin_bot(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.speed = 9
         self.get_angle(player.rect.centerx, player.rect.centery)
+        self.collision = [0, 0, 0, 0]
 
     def get_angle(self, player_pos_x, player_pos_y):
         rel_x, rel_y = player_pos_x - self.rect.centerx, player_pos_y - self.rect.centery
@@ -103,9 +104,36 @@ class Spin_bot(pygame.sprite.Sprite):
     def update(self, player):
         if timer % 7 == 0:
             self.next_image()
-        self.get_angle(player.rect.centerx, player.rect.centery)
-        self.rect.x += self.speed * math.cos(self.angle)
-        self.rect.y += self.speed * math.sin(self.angle)
+        if self.collision == [0, 0, 0, 0]:
+            self.get_angle(player.rect.centerx, player.rect.centery)
+        self.collision = [0, 0, 0, 0]
+        for x in map_sprites:
+            j = pygame.sprite.collide_mask(self, x)
+            if j:
+                if x.image_name == "wall_textures/up_wall.png" and not x.reverse_y:
+                    self.collision[0] = 1
+                if x.image_name == "wall_textures/up_wall.png" and x.reverse_y:
+                    self.collision[1] = 1
+                if x.image_name == "wall_textures/side_wall.png" and not x.reverse_x:
+                    self.collision[2] = 1
+                if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
+                    self.collision[3] = 1
+        print(self.angle, self.collision, self.angle >= -1.57000000, self.angle <= -1.57000000)
+        if self.collision[0]:
+            if self.angle >= -1.57000000 and self.angle <= 1.57:
+                self.rect.x += self.speed
+            if self.angle <= -1.57000000 or self.angle >= 1.57:
+                self.rect.x -= self.speed
+        if self.collision[2]:
+            if self.angle <= 0:
+                self.rect.y += self.speed
+            if self.angle >= 0:
+                self.rect.y -= self.speed
+
+        if self.collision == [0, 0, 0, 0]:
+            print(1)
+            self.rect.x += self.speed * math.cos(self.angle)
+            self.rect.y += self.speed * math.sin(self.angle)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -179,6 +207,7 @@ class Player(pygame.sprite.Sprite):
                     collision[2] = 1
                 if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
                     collision[3] = 1
+        print(collision)
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
             self.speed = 7
         else:
@@ -200,11 +229,11 @@ clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 player_sprites = pygame.sprite.Group()
 bullet_sprites = pygame.sprite.Group()
-player = Player(500, 300, 0, player_sprites)
+player = Player(500, 500, 0, player_sprites)
 timer = 0
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
-Spin_bot(500, 500, enemies_sprites, player)
+Enemy(500, 1000, enemies_sprites, player)
 
 map_sprites = draw_map(map)
 
