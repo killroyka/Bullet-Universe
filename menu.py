@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit
-from main import *
+from main import game
 import sys
 
 
@@ -19,14 +19,20 @@ class Example(QWidget):
         self.btn_settings = QPushButton('Настройки', self)
         self.btn_settings.resize(200, 40)
         self.btn_settings.move(10, 70)
-        # self.btn_settings.clicked.connect(self.settings)
+        self.btn_settings.clicked.connect(self.settings)
         self.btn_exit = QPushButton('Выйти', self)
         self.btn_exit.resize(200, 40)
         self.btn_exit.move(10, 120)
-        # self.btn_exit.clicked.connect(self.exit)
+        self.btn_exit.clicked.connect(self.exit)
 
     def play(self):
+        game()
+
+    def settings(self):
         pass
+
+    def exit(self):
+        exit()
 
 
 if __name__ == '__main__':
