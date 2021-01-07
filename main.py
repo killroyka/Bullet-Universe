@@ -6,6 +6,7 @@ from pprint import pprint
 import random
 from map import *
 from sounds import *
+from time import sleep as sl
 
 
 class Gun(pygame.sprite.Sprite):
@@ -104,36 +105,49 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, player):
         if timer % 7 == 0:
             self.next_image()
-        if self.collision == [0, 0, 0, 0]:
-            self.get_angle(player.rect.centerx, player.rect.centery)
-        self.collision = [0, 0, 0, 0]
-        for x in map_sprites:
-            j = pygame.sprite.collide_mask(self, x)
-            if j:
-                if x.image_name == "wall_textures/up_wall.png" and not x.reverse_y:
-                    self.collision[0] = 1
-                if x.image_name == "wall_textures/up_wall.png" and x.reverse_y:
-                    self.collision[1] = 1
-                if x.image_name == "wall_textures/side_wall.png" and not x.reverse_x:
-                    self.collision[2] = 1
-                if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
-                    self.collision[3] = 1
-        print(self.angle, self.collision, self.angle >= -1.57000000, self.angle <= -1.57000000)
-        if self.collision[0]:
-            if self.angle >= -1.57000000 and self.angle <= 1.57:
-                self.rect.x += self.speed
-            if self.angle <= -1.57000000 or self.angle >= 1.57:
-                self.rect.x -= self.speed
-        if self.collision[2]:
-            if self.angle <= 0:
-                self.rect.y += self.speed
-            if self.angle >= 0:
-                self.rect.y -= self.speed
+        self.get_angle(player.rect.centerx, player.rect.centery)
+        d = 0
+        playerx = player.rect.x // 128
+        playery = player.rect.y // 128
+        print(playerx, playery)
+        map[playerx][playery] = "p"
 
-        if self.collision == [0, 0, 0, 0]:
-            print(1)
-            self.rect.x += self.speed * math.cos(self.angle)
-            self.rect.y += self.speed * math.sin(self.angle)
+        while map[playerx][playery] == "p":
+            for x in range(len(map)):
+                for y in range(len(map[0])):
+                    if map[x][y] == d:
+                        for i in range(x - 1, x + 2):
+                            for j in range(y - 1, y + 2):
+                                if map[i][j] != "#" and type(map[i][j]) != type(0):
+                                    map[i][j] = map[x][y] + 1
+            d += 1
+        for t in range(len(map)):
+            for z in range(len(map[0])):
+                print(map[t][z], end="\t")
+            print()
+        print(d)
+        x = playerx
+        y = playery
+        way = []
+        map[playerx][playery] = "p"
+
+        while d != 0:
+            for i in range(x - 1, x + 2):
+                for j in range(y - 1, y + 2):
+                    if map[i][j] == d:
+                        way.append([i, j])
+                        x, y = i, j
+                        d -= 1
+        print(way)
+        for x in way:
+            map[x[0]][x[1]] = "w"
+        for t in range(len(map)):
+            for z in range(len(map[0])):
+                print(map[t][z], end="\t")
+            print()
+
+        self.rect.x = way[0][1] * 128
+        self.rect.y = way[0][0] * 128
 
 
 class Tile(pygame.sprite.Sprite):
@@ -207,7 +221,6 @@ class Player(pygame.sprite.Sprite):
                     collision[2] = 1
                 if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
                     collision[3] = 1
-        print(collision)
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
             self.speed = 7
         else:
@@ -260,6 +273,8 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
+
+
     if pygame.mouse.get_pressed(3)[0] and shot_timer >= 50:
         for x in range(-4, 3):
             Bullet(player.rect.centerx, player.rect.centery,
