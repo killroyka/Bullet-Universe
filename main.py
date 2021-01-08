@@ -10,23 +10,19 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit
 
 
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, image_name, pos_x, pos_y, angle, group):
+    def __init__(self, image_name, pos_x, pos_y, group):
         super().__init__(group, all_sprites)
         self.image = load_image(image_name)
-        self.angle = angle
         self.coords = pos_x, pos_y
         self.last_angle = 0
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
-    def rotate(self, img, pos, angle):
-        w, h = img.get_size()
-        img2 = pygame.Surface((w * 2, h * 2), pygame.SRCALPHA)
-        img2.blit(img, (w - pos[0], h - pos[1]))
-        return pygame.transform.rotate(img2, angle)
-
     def update(self, player):
-        self.image = self.rotate(self.image, player.rect.center, player.angle - self.last_angle / math.pi * 180)
-        self.last_angle = player.angle
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x, rel_y = mouse_x - self.coords[0], mouse_y - self.coords[1]
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        self.image = pygame.transform.rotate(self.image, int(angle))
+        self.rect = self.image.get_rect(center=(player.rect.x, player.rect.y))
 
 
 class ShotGun(Gun):
@@ -220,6 +216,7 @@ def game():
     pygame.mixer.music.play(-1)
     #
     sounds = Sounds()
+    gun = ShotGun('magnum.png', player.rect.centerx, player.rect.centery, guns_sprites)
     while True:
         screen.fill("black")
         for event in pygame.event.get():
