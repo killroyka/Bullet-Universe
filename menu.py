@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit
-from main import game
+
 import sys
 
 
