@@ -96,7 +96,7 @@ class Enemy(pygame.sprite.Sprite):
         self.collision = [0, 0, 0, 0]
         self.map = map
         self.way = []
-        self.map[self.rect.x // 128][self.rect.y // 128] = 0
+        self.map[self.rect.y // 128][self.rect.x // 128] = 0
         print([[self.rect.x // 128],[self.rect.y // 128]])
         self.playerx = (player.rect.centerx + camera.dx) // 128
         self.playery = (player.rect.centery + camera.dy) // 128
@@ -110,7 +110,6 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.images[(self.images.index(self.image) + 1) % 3]
     def update_way(self):
         self.map = map
-        self.way = []
         self.map[self.rect.x // 128][self.rect.y // 128] = 0
 
 
@@ -161,7 +160,7 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, player):
         self.get_angle(player.rect.centerx, player.rect.centery)
         check = [0, 0, 0]
-        for x in range(300):
+        for x in range(0, 500, 10):
             if player.rect.collidepoint(self.rect.x + (self.speed + x) * math.cos(self.angle), self.rect.y + (self.speed + x) * math.sin(self.angle)):
                 check[0] = 1
                 break
@@ -176,9 +175,9 @@ class Enemy(pygame.sprite.Sprite):
             try:
                 if self.t >= len(self.way):
                     self.update_way()
-                if (player.rect.x + camera.dx) // 128 != self.playerx or (player.rect.y + camera.dy) // 128 != self.playery:
+                if (player.rect.centerx + camera.dx) // 128 != self.playerx or (player.rect.centery + camera.dy) // 128 != self.playery:
                     self.update_way()
-                if self.rect.x // 128 != self.way[self.t][0] or self.rect.y // 128 != self.way[self.t][1]:
+                if self.rect.x // 128 != self.way[self.t][0] and self.rect.y // 128 != self.way[self.t][1]:
                     self.rect.x -= (self.rect.x // 128 - self.way[self.t][0]) * self.speed
                     self.rect.y -= (self.rect.y // 128 - self.way[self.t][1]) * self.speed
                 else:
