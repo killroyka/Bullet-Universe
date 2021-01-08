@@ -13,15 +13,22 @@ class Gun(pygame.sprite.Sprite):
     def __init__(self, image_name, pos_x, pos_y, group):
         super().__init__(group, all_sprites)
         self.image = load_image(image_name)
+        self.image_name = image_name
+        self.image = pygame.transform.scale(self.image, (100, 100))
         self.coords = pos_x, pos_y
         self.last_angle = 0
+        self.rotate = 0
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
     def update(self, player):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        rel_x, rel_y = mouse_x - self.coords[0], mouse_y - self.coords[1]
-        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-        self.image = pygame.transform.rotate(self.image, int(angle))
+        # mouse_x, mouse_y = pygame.mouse.get_pos()
+        # rel_x, rel_y = mouse_x - self.coords[0], mouse_y - self.coords[1]
+        self.rotate += 5
+        self.rotate = self.rotate % 180
+        if self.rotate % 180 == 0:
+            self.image = load_image(self.image_name)
+            self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.rotate(self.image, 5)
         self.rect = self.image.get_rect(center=(player.rect.x, player.rect.y))
 
 
