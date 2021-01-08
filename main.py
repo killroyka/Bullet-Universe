@@ -2,7 +2,7 @@ import pygame
 import sys
 import os
 import math
-from pprint import pprint
+import pprint
 import random
 from map import *
 from sounds import *
@@ -94,6 +94,13 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = 9
         self.get_angle(player.rect.centerx, player.rect.centery)
         self.collision = [0, 0, 0, 0]
+        self.map = map
+        self.way = []
+        self.map[self.rect.x // 128][self.rect.y // 128] = 0
+        print([[self.rect.x // 128],[self.rect.y // 128]])
+        self.playerx = (player.rect.centerx + camera.dx) // 128
+        self.playery = (player.rect.centery + camera.dy) // 128
+        self.t = 1
 
     def get_angle(self, player_pos_x, player_pos_y):
         rel_x, rel_y = player_pos_x - self.rect.centerx, player_pos_y - self.rect.centery
@@ -101,53 +108,89 @@ class Enemy(pygame.sprite.Sprite):
 
     def next_image(self):
         self.image = self.images[(self.images.index(self.image) + 1) % 3]
+    def update_way(self):
+        self.map = map
+        self.way = []
+        self.map[self.rect.x // 128][self.rect.y // 128] = 0
 
-    def update(self, player):
-        if timer % 7 == 0:
-            self.next_image()
-        self.get_angle(player.rect.centerx, player.rect.centery)
+
         d = 0
-        playerx = player.rect.x // 128
-        playery = player.rect.y // 128
-        print(playerx, playery)
-        map[playerx][playery] = "p"
-
-        while map[playerx][playery] == "p":
-            for x in range(len(map)):
+        self.way = []
+        self.t = 1
+        self.playerx = (player.rect.centerx + camera.dx) // 128
+        self.playery = (player.rect.centery + camera.dy) // 128
+        print(self.playerx, self.playery)
+        self.map[self.playerx][self.playery] = "p"
+        while self.map[self.playerx][self.playery] == "p":
+            for x in range(len(self.map)):
                 for y in range(len(map[0])):
-                    if map[x][y] == d:
+                    if self.map[x][y] == d:
                         for i in range(x - 1, x + 2):
                             for j in range(y - 1, y + 2):
-                                if map[i][j] != "#" and type(map[i][j]) != type(0):
-                                    map[i][j] = map[x][y] + 1
+                                if self.map[i][j] != "#" and type(self.map[i][j]) != type(0):
+                                    self.map[i][j] = self.map[x][y] + 1
             d += 1
-        for t in range(len(map)):
-            for z in range(len(map[0])):
-                print(map[t][z], end="\t")
+        for t in range(len(self.map)):
+            for z in range(len(self.map[0])):
+                print(self.map[t][z], end="\t")
             print()
         print(d)
-        x = playerx
-        y = playery
-        way = []
-        map[playerx][playery] = "p"
+        x = self.playerx
+        y = self.playery
+        self.map[self.playerx][self.playery] = "p"
 
-        while d != 0:
+        while d > 0:
+            a = d
             for i in range(x - 1, x + 2):
                 for j in range(y - 1, y + 2):
-                    if map[i][j] == d:
-                        way.append([i, j])
+                    if self.map[i][j] == d:
+                        self.way.append([i, j])
                         x, y = i, j
                         d -= 1
-        print(way)
-        for x in way:
-            map[x[0]][x[1]] = "w"
-        for t in range(len(map)):
-            for z in range(len(map[0])):
-                print(map[t][z], end="\t")
-            print()
+            if a == d:
+                break
 
-        self.rect.x = way[0][1] * 128
-        self.rect.y = way[0][0] * 128
+        self.way = [[self.playerx, self.playery]] + self.way
+        print(self.way)
+        for t in range(len(self.map)):
+            for z in range(len(self.map[0])):
+                print(self.map[t][z], end="\t")
+            print()
+        self.map[self.playerx][self.playery] = '.'
+
+    def update(self, player):
+        self.get_angle(player.rect.centerx, player.rect.centery)
+        check = [0, 0, 0]
+        for x in range(300):
+            if player.rect.collidepoint(self.rect.x + (self.speed + x) * math.cos(self.angle), self.rect.y + (self.speed + x) * math.sin(self.angle)):
+                check[0] = 1
+                break
+            for y in map_sprites:
+                if y.rect.collidepoint(self.rect.x + (self.speed + x) * math.cos(self.angle), self.rect.y + (self.speed + x) * math.sin(self.angle)):
+                    check[1] = 1
+                    break
+        print(check)
+        if timer % 7 == 0:
+            self.next_image()
+        if check[1]:
+            try:
+                if self.t >= len(self.way):
+                    self.update_way()
+                if (player.rect.x + camera.dx) // 128 != self.playerx or (player.rect.y + camera.dy) // 128 != self.playery:
+                    self.update_way()
+                if self.rect.x // 128 != self.way[self.t][0] or self.rect.y // 128 != self.way[self.t][1]:
+                    self.rect.x -= (self.rect.x // 128 - self.way[self.t][0]) * self.speed
+                    self.rect.y -= (self.rect.y // 128 - self.way[self.t][1]) * self.speed
+                else:
+                    self.t += 1
+
+                print(self.t)
+            except Exception:
+                print("error")
+        if check[0]:
+            self.rect.x += self.speed * math.cos(self.angle)
+            self.rect.y += self.speed * math.sin(self.angle)
+            print(21213)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -246,7 +289,7 @@ player = Player(500, 500, 0, player_sprites)
 timer = 0
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
-Enemy(500, 1000, enemies_sprites, player)
+enemy = Enemy(800, 1400, enemies_sprites, player)
 
 map_sprites = draw_map(map)
 
@@ -261,7 +304,14 @@ shot_timer = 0
 while True:
     screen.fill("black")
     for event in pygame.event.get():
+        for x in enemy.way:
+            enemy.map[x[0]][x[1]] = "w"
         if event.type == pygame.QUIT:
+            for t in range(len(enemy.map)):
+                for z in range(len(enemy.map[0])):
+                    print(enemy.map[t][z], end="\t")
+                print()
+            print(enemy.way)
             exit()
 
     timer += 1
