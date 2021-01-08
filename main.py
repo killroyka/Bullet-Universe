@@ -201,7 +201,6 @@ def game():
     timer = 0
     shot_timer = 0
     screen = pygame.display.set_mode(size)
-    screen.fill("black")
     all_sprites = pygame.sprite.Group()
     player_sprites = pygame.sprite.Group()
     bullet_sprites = pygame.sprite.Group()
@@ -222,6 +221,7 @@ def game():
     #
     sounds = Sounds()
     while True:
+        screen.fill("black")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
