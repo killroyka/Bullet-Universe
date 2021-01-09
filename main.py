@@ -5,7 +5,8 @@ import math
 from pprint import pprint
 import random
 from map import *
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog, \
+    QComboBox
 from PyQt5.QtCore import Qt
 from pygame import mixer
 
@@ -228,8 +229,7 @@ class Sounds:
 
 
 def game():
-    global all_sprites, player_sprites, bullet_sprites, timer, guns_sprites, map_sprites, enemies_sprites, camera, player, clock, size, width, height
-    size = width, height = 1600, 1080
+    global all_sprites, player_sprites, bullet_sprites, timer, guns_sprites, map_sprites, enemies_sprites, camera, player, clock
     pygame.init()
     timer = 0
     shot_timer = 0
@@ -286,6 +286,12 @@ def game():
         pygame.display.flip()
 
 
+def set_screen_resolution(value):
+    global size, width, height
+    size = width, height = value[0], value[1]
+    print(size)
+
+
 class Menu(QMainWindow):
     def __init__(self):
         self.count = 0
@@ -337,6 +343,22 @@ class Settings(QDialog):
         self.slider_sound.setMaximum(100)
         self.slider_sound.setValue(self.sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
+        self.resolutions_label = QLabel(self)
+        self.resolutions_label.setText("Разрешение:")
+        self.resolutions_label.move(20, 120)
+        self.resolutions = QComboBox(self)
+        self.resolutions.move(120, 115)
+        self.resolutions.resize(150, 30)
+        self.resolutions.addItem("800 × 600")
+        self.resolutions.addItem("1024 × 576")
+        self.resolutions.addItem("1200 × 720")
+        self.resolutions.addItem("1366 × 768")
+        self.resolutions.addItem("1440 × 900")
+        self.resolutions.addItem("1920 × 1080")
+        self.resolutions.activated[str].connect(self.resolution_changed)
+
+    def resolution_changed(self, text):
+        set_screen_resolution((int(text.split()[0]), int(text.split()[2])))
 
     def volume_changed(self, value):
         s = "Громкость:" + " " + str(value) + "%"
