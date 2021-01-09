@@ -41,26 +41,26 @@ class ShotGun(Gun):
 def draw_map(map):
     map_sprites = pygame.sprite.Group()
     corner_sprites = pygame.sprite.Group()
-    for x in range(1, len(map) - 1):
-        for y in range(1, len(map[0]) - 1):
+    for x in range(len(map) - 1):
+        for y in range(len(map[0]) - 1):
             if map[x][y] == "e":
                 Enemy(128 * y, 128 * x, enemies_sprites, player)
-            if map[x][y] == "#" and map[x][y - 1] == ".":
+            if map[x][y] == "#" and map[x][y - 1] != "#":
                 Tile("wall_textures/side_wall.png", y, x, map_sprites, reverse_x=True)
-            if map[x][y] == "#" and map[x][y + 1] == ".":
+            if map[x][y] == "#" and map[x][y + 1] != "#":
                 Tile("wall_textures/side_wall.png", y, x, map_sprites)
-            if map[x][y] == "#" and map[x + 1][y] == ".":
+            if map[x][y] == "#" and map[x + 1][y] != "#":
                 Tile("wall_textures/up_wall.png", y, x, map_sprites)
-            if map[x][y] == "#" and map[x - 1][y] == ".":
+            if map[x][y] == "#" and map[x - 1][y] != "#":
                 Tile("wall_textures/up_wall.png", y, x, map_sprites, reverse_y=True)
 
-            if map[x][y] == "#" and map[x - 1][y - 1] == ".":
+            if map[x][y] == "#" and map[x - 1][y - 1] != "#":
                 Tile("wall_textures/LD_wall.png", y, x, corner_sprites)
-            if map[x][y] == "#" and map[x - 1][y + 1] == ".":
+            if map[x][y] == "#" and map[x - 1][y + 1] != "#":
                 Tile("wall_textures/RD_wall.png", y, x, corner_sprites)
-            if map[x][y] == "#" and map[x + 1][y - 1] == ".":
+            if map[x][y] == "#" and map[x + 1][y - 1] != "#":
                 Tile("wall_textures/UL_wall.png", y, x, corner_sprites)
-            if map[x][y] == "#" and map[x + 1][y + 1] == ".":
+            if map[x][y] == "#" and map[x + 1][y + 1] != "#":
                 Tile("wall_textures/UR_wall.png", y, x, corner_sprites)
     for x in map_sprites:
         pygame.sprite.spritecollide(x, corner_sprites, True)
@@ -114,7 +114,6 @@ class Enemy(pygame.sprite.Sprite):
         rel_y, rel_x = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
                 self.rect.y + self.rect.size[1] // 2)
         self.angle = -math.atan2(rel_y, rel_x) + math.pi / 2
-        print(self.angle)
 
     def next_image(self):
         self.image = self.images[(self.images.index(self.image) + 1) % 3]
@@ -133,10 +132,23 @@ class Enemy(pygame.sprite.Sprite):
         self.playerx = (player.rect.centery - camera.ddy) // 128
         self.playery = (player.rect.centerx - camera.ddx) // 128
         self.map[self.playerx][self.playery] = "p"
+        self.map[self.rect.centery // 128][self.rect.centerx // 128] = 0
+
         while self.map[self.playerx][self.playery] == "p":
-            print(self.map[self.rect.y // 128][self.rect.x // 128], [[self.rect.y // 128], [self.rect.x // 128]])
             for x in range(len(self.map)):
-                for y in range(len(map[0])):
+                for y in range(len(self.map[0])):
+                    print(self.map[x][y], end="\t")
+                print()
+            print(d)
+
+            for x in range(1, len(self.map)):
+                for y in range(1, len(map[0])):
+                    try:
+                        if self.map[x - 1][y] == "#" and self.map[x + 1][y] == "#" and self.map[x][y - 1] == "#" and \
+                                self.map[x][y + 1] == "#":
+                            break
+                    except Exception:
+                        print("error")
                     if self.map[x][y] == d:
                         if self.map[x - 1][y] != "#" and type(self.map[x - 1][y]) != type(0):
                             self.map[x - 1][y] = self.map[x][y] + 1
@@ -147,13 +159,11 @@ class Enemy(pygame.sprite.Sprite):
                         if self.map[x][y + 1] != "#" and type(self.map[x][y + 1]) != type(0):
                             self.map[x][y + 1] = self.map[x][y] + 1
             d += 1
-        print(d)
+
         x = self.playerx
         y = self.playery
         while d > 0:
             a = d
-            print(d)
-            print(x, y, d, ">>>>>>>>>>>>>>>>>>>.")
             if self.map[x + 1][y] == d:
                 self.way.append([x + 1, y])
                 x += 1
@@ -174,47 +184,37 @@ class Enemy(pygame.sprite.Sprite):
                 break
 
         self.way = [[self.playerx, self.playery]] + self.way
-        print(self.way)
-        for t in range(len(self.map)):
-            for z in range(len(self.map[0])):
-                print(self.map[t][z], end="\t")
-            print()
         self.map[self.playerx][self.playery] = '.'
 
     def update(self, player):
         self.get_angle()
         Bullet(self.rect.centerx, self.rect.centery, self.angle, bullet_sprites, 20, enemy)
         check = [0, 0, 0]
-        print(self.playerx, self.playery, camera.dx, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        print(math.cos(self.angle), math.sin(self.angle))
         ax = self.rect.centerx
         ay = self.rect.centery
-        for x in range(0, 500, 5):
+        for x in range(0, 1000, 10):
+            print(1)
             ax += self.speed * math.cos(self.angle)
             ay += self.speed * math.sin(self.angle)
             if player.rect.collidepoint(ax, ay):
                 check[0] = 1
-                print((self.rect.centerx + (self.speed + x) * math.cos(self.angle),
-                       self.rect.centery + (self.speed + x) * math.sin(self.angle)), "player")
                 break
             for y in map_sprites:
                 if y.rect.collidepoint(ax, ay):
-                    print((self.rect.centerx + (self.speed + x) * math.cos(self.angle),
-                           self.rect.centery + (self.speed + x) * math.sin(self.angle)), "wall")
                     check[1] = 1
                     break
             else:
                 continue
             break
-        print(check)
         if timer % 7 == 0:
             self.next_image()
+        if check != [0, 0, 0]:
+            print(check)
         if check[1]:
-            print(self.rect.center, "enemy pos")
+
             if self.t >= len(self.way):
                 self.update_way()
             if self.rect.centerx // 128 != self.way[self.t][0] or self.rect.centery // 128 != self.way[self.t][1]:
-                print(2)
                 self.rect.centerx -= (self.rect.centerx // 128 - self.way[self.t][0]) * (self.speed // 2)
                 self.rect.centery -= (self.rect.centery // 128 - self.way[self.t][1]) * (self.speed // 2)
             if self.rect.x // 128 == self.playerx and self.rect.y // 128 == self.playery:
@@ -222,11 +222,9 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.t += 1
 
-            print(self.t, "<<<<<<<<<<<<<<<<<<<")
         if check[0]:
             self.rect.x += self.speed * math.cos(self.angle)
             self.rect.y += self.speed * math.sin(self.angle)
-            print(21213)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -283,7 +281,7 @@ class Player(pygame.sprite.Sprite):
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
-        self.speed = 10
+        self.speed = 40
         self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
@@ -305,7 +303,7 @@ class Player(pygame.sprite.Sprite):
                 if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
                     collision[3] = 1
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
-            self.speed = 7
+            self.speed = (self.speed ** 2) ** 0.5
         else:
             self.speed = 10
         if keys[pygame.K_w] and not collision[0]:
