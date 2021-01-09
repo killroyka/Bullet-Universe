@@ -43,8 +43,6 @@ def draw_map(map):
     corner_sprites = pygame.sprite.Group()
     for x in range(1, len(map) - 1):
         for y in range(1, len(map[0]) - 1):
-            if map[x][y] == "e":
-                Enemy(128 * y, 128 * x, enemies_sprites, player)
             if map[x][y] == "#" and map[x][y - 1] == ".":
                 Tile("wall_textures/side_wall.png", y, x, map_sprites, reverse_x=True)
             if map[x][y] == "#" and map[x][y + 1] == ".":
@@ -94,82 +92,60 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.images[0]
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.speed = 9
-        self.get_angle()
+        self.get_angle(player.rect.centerx, player.rect.centery)
         self.collision = [0, 0, 0, 0]
-        self.map = []
-        for x in range(len(map)):
-            self.map.append([])
-            for y in range(len(map[x])):
-                self.map[x].append(map[x][y])
+        self.map = map
         self.way = []
-        self.playerx = (player.rect.centery - camera.ddx) // 128
-        self.playery = (player.rect.centerx - camera.ddy) // 128
         self.map[self.rect.y // 128][self.rect.x // 128] = 0
-        print([[self.rect.x // 128], [self.rect.y // 128]])
+        print([[self.rect.x // 128],[self.rect.y // 128]])
+        self.playerx = (player.rect.centerx + camera.dx) // 128
+        self.playery = (player.rect.centery + camera.dy) // 128
+        self.t = 1
 
-        self.t = 0
-
-    def get_angle(self):
-        mouse_x, mouse_y = player.rect.centerx, player.rect.centery
-        rel_y, rel_x = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
-                self.rect.y + self.rect.size[1] // 2)
-        self.angle = -math.atan2(rel_y, rel_x) + math.pi / 2
-        print(self.angle)
+    def get_angle(self, player_pos_x, player_pos_y):
+        rel_x, rel_y = player_pos_x - self.rect.centerx, player_pos_y - self.rect.centery
+        self.angle = math.atan2(rel_y, rel_x)
 
     def next_image(self):
         self.image = self.images[(self.images.index(self.image) + 1) % 3]
-
     def update_way(self):
-        self.map = []
-        for x in range(len(map)):
-            self.map.append([])
-            for y in range(len(map[x])):
-                self.map[x].append(map[x][y])
-        self.map[self.rect.y // 128][self.rect.x // 128] = 0
+        self.map = map
+        self.map[self.rect.x // 128][self.rect.y // 128] = 0
+
 
         d = 0
         self.way = []
-        self.t = 0
-        self.playerx = (player.rect.centery - camera.ddy) // 128
-        self.playery = (player.rect.centerx - camera.ddx) // 128
+        self.t = 1
+        self.playerx = (player.rect.centerx + camera.dx) // 128
+        self.playery = (player.rect.centery + camera.dy) // 128
+        print(self.playerx, self.playery)
         self.map[self.playerx][self.playery] = "p"
         while self.map[self.playerx][self.playery] == "p":
-            print(self.map[self.rect.y // 128][self.rect.x // 128], [[self.rect.y // 128], [self.rect.x // 128]])
             for x in range(len(self.map)):
                 for y in range(len(map[0])):
                     if self.map[x][y] == d:
-                        if self.map[x - 1][y] != "#" and type(self.map[x - 1][y]) != type(0):
-                            self.map[x - 1][y] = self.map[x][y] + 1
-                        if self.map[x + 1][y] != "#" and type(self.map[x + 1][y]) != type(0):
-                            self.map[x + 1][y] = self.map[x][y] + 1
-                        if self.map[x][y - 1] != "#" and type(self.map[x][y - 1]) != type(0):
-                            self.map[x][y - 1] = self.map[x][y] + 1
-                        if self.map[x][y + 1] != "#" and type(self.map[x][y + 1]) != type(0):
-                            self.map[x][y + 1] = self.map[x][y] + 1
+                        for i in range(x - 1, x + 2):
+                            for j in range(y - 1, y + 2):
+                                if self.map[i][j] != "#" and type(self.map[i][j]) != type(0):
+                                    self.map[i][j] = self.map[x][y] + 1
             d += 1
+        for t in range(len(self.map)):
+            for z in range(len(self.map[0])):
+                print(self.map[t][z], end="\t")
+            print()
         print(d)
         x = self.playerx
         y = self.playery
+        self.map[self.playerx][self.playery] = "p"
+
         while d > 0:
             a = d
-            print(d)
-            print(x, y, d, ">>>>>>>>>>>>>>>>>>>.")
-            if self.map[x + 1][y] == d:
-                self.way.append([x + 1, y])
-                x += 1
-                d -= 1
-            if self.map[x - 1][y] == d:
-                self.way.append([x - 1, y])
-                x -= 1
-                d -= 1
-            if self.map[x][y + 1] == d:
-                self.way.append([x, y + 1])
-                y += 1
-                d -= 1
-            if self.map[x][y - 1] == d:
-                self.way.append([x, y - 1])
-                y -= 1
-                d -= 1
+            for i in range(x - 1, x + 2):
+                for j in range(y - 1, y + 2):
+                    if self.map[i][j] == d:
+                        self.way.append([i, j])
+                        x, y = i, j
+                        d -= 1
             if a == d:
                 break
 
@@ -182,47 +158,34 @@ class Enemy(pygame.sprite.Sprite):
         self.map[self.playerx][self.playery] = '.'
 
     def update(self, player):
-        self.get_angle()
-        Bullet(self.rect.centerx, self.rect.centery, self.angle, bullet_sprites, 20, enemy)
+        self.get_angle(player.rect.centerx, player.rect.centery)
         check = [0, 0, 0]
-        print(self.playerx, self.playery, camera.dx, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        print(math.cos(self.angle), math.sin(self.angle))
-        ax = self.rect.centerx
-        ay = self.rect.centery
-        for x in range(0, 500, 5):
-            ax += self.speed * math.cos(self.angle)
-            ay += self.speed * math.sin(self.angle)
-            if player.rect.collidepoint(ax, ay):
+        for x in range(0, 500, 10):
+            if player.rect.collidepoint(self.rect.x + (self.speed + x) * math.cos(self.angle), self.rect.y + (self.speed + x) * math.sin(self.angle)):
                 check[0] = 1
-                print((self.rect.centerx + (self.speed + x) * math.cos(self.angle),
-                       self.rect.centery + (self.speed + x) * math.sin(self.angle)), "player")
                 break
             for y in map_sprites:
-                if y.rect.collidepoint(ax, ay):
-                    print((self.rect.centerx + (self.speed + x) * math.cos(self.angle),
-                           self.rect.centery + (self.speed + x) * math.sin(self.angle)), "wall")
+                if y.rect.collidepoint(self.rect.x + (self.speed + x) * math.cos(self.angle), self.rect.y + (self.speed + x) * math.sin(self.angle)):
                     check[1] = 1
                     break
-            else:
-                continue
-            break
         print(check)
         if timer % 7 == 0:
             self.next_image()
         if check[1]:
-            print(self.rect.center, "enemy pos")
-            if self.t >= len(self.way):
-                self.update_way()
-            if self.rect.centerx // 128 != self.way[self.t][0] or self.rect.centery // 128 != self.way[self.t][1]:
-                print(2)
-                self.rect.centerx -= (self.rect.centerx // 128 - self.way[self.t][0]) * (self.speed // 2)
-                self.rect.centery -= (self.rect.centery // 128 - self.way[self.t][1]) * (self.speed // 2)
-            if self.rect.x // 128 == self.playerx and self.rect.y // 128 == self.playery:
-                self.update_way()
-            else:
-                self.t += 1
+            try:
+                if self.t >= len(self.way):
+                    self.update_way()
+                if (player.rect.centerx + camera.dx) // 128 != self.playerx or (player.rect.centery + camera.dy) // 128 != self.playery:
+                    self.update_way()
+                if self.rect.x // 128 != self.way[self.t][0] and self.rect.y // 128 != self.way[self.t][1]:
+                    self.rect.x -= (self.rect.x // 128 - self.way[self.t][0]) * self.speed
+                    self.rect.y -= (self.rect.y // 128 - self.way[self.t][1]) * self.speed
+                else:
+                    self.t += 1
 
-            print(self.t, "<<<<<<<<<<<<<<<<<<<")
+                print(self.t)
+            except Exception:
+                print("error")
         if check[0]:
             self.rect.x += self.speed * math.cos(self.angle)
             self.rect.y += self.speed * math.sin(self.angle)
@@ -261,8 +224,6 @@ class Camera:
     def __init__(self):
         self.dx = 0
         self.dy = 0
-        self.ddx = 0
-        self.ddy = 0
 
     def apply(self, obj):
         obj.rect.x += self.dx
@@ -271,8 +232,6 @@ class Camera:
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
-        self.ddx += self.dx
-        self.ddy += self.dy
 
 
 class Player(pygame.sprite.Sprite):
@@ -349,10 +308,9 @@ while True:
         if event.type == pygame.QUIT:
             for t in range(len(enemy.map)):
                 for z in range(len(enemy.map[0])):
-                    print(map[t][z], end="\t")
+                    print(enemy.map[t][z], end="\t")
                 print()
             print(enemy.way)
-
             exit()
 
     timer += 1
@@ -364,6 +322,7 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
+
 
     if pygame.mouse.get_pressed(3)[0] and shot_timer >= 50:
         for x in range(-4, 3):
