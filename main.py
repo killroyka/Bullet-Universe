@@ -5,9 +5,9 @@ import math
 from pprint import pprint
 import random
 from map import *
-from sounds import *
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog
 from PyQt5.QtCore import Qt
+from pygame import mixer
 
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
