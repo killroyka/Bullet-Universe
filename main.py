@@ -227,7 +227,7 @@ class Spin_bot(Enemy):
         for x in range(0, 13, 1):
             Bullet(self.rect.centerx + 40 * math.cos(x / 2), self.rect.centery + 40 * math.sin(x / 2), self.angle,
                    bullet_sprites, 10,
-                   enemy)
+                   "enemy")
 
     def transform(self):
         if self.form == 1 and self.images.index(self.image) != 2:
@@ -306,13 +306,20 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, pos_x, pos_y, angle, group):
         super().__init__(group, all_sprites)
+        self.hp = 100
+        self.dmg = 10
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
+        self.reloading = 100
         self.speed = 40
         self.mask = pygame.mask.from_surface(self.image)
 
+    def draw_hp_reloading(self):
+        pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
+        pygame.draw.rect(screen, (6, 22, 103), (width // 2, 0,  self.reloading * width // 200, height // 40))
     def update(self):
+        self.draw_hp_reloading()
         mouse_x, mouse_y = pygame.mouse.get_pos()
         rel_x, rel_y = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
                 self.rect.y + self.rect.size[1] // 2)
@@ -383,8 +390,9 @@ while True:
 
     timer += 1
     timer = timer % 1000
-    player_sprites.update()
     all_sprites.draw(screen)
+    player_sprites.update()
+
     camera.update(player)
     bullet_sprites.update()
     guns_sprites.update(player)
@@ -396,10 +404,25 @@ while True:
             Bullet(player.rect.centerx, player.rect.centery,
                    player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
                    random.randint(25, 30),
-                   player)
+                   "player")
             sounds.shotgun_shot()
             shot_timer = 0
     shot_timer += 1
+    for x in bullet_sprites:
+        if pygame.sprite.collide_mask(player, x) and x.whos != "player":
+            pygame.sprite.spritecollide(player, bullet_sprites, True)
+            player.hp -= 10
+            player.update()
+            draw_FPS(screen)
+        for y in enemies_sprites:
+            if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
+                y.hp -= player.dmg
+                pygame.sprite.spritecollide(y, bullet_sprites, True)
+                if y.hp <= 0:
+                    #TODO нарисовать сломанного бота
+                    y.image = load_image("magnum.png")
+                    enemies_sprites.remove(y)
+
     for x in map_sprites:
         j = pygame.sprite.spritecollide(x, bullet_sprites, True)
     for x in all_sprites:
