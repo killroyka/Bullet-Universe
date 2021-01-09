@@ -300,6 +300,7 @@ pygame.mixer.music.play(-1)
 #
 sounds = Sounds()
 shot_timer = 0
+print("ya hz kak rabotat s git")
 while True:
     screen.fill("black")
     for event in pygame.event.get():
