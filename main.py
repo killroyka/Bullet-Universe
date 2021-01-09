@@ -6,7 +6,10 @@ from pprint import pprint
 import random
 from map import *
 from sounds import *
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog
+from PyQt5.QtCore import Qt
+
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
 
 class Gun(pygame.sprite.Sprite):
@@ -197,6 +200,33 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += self.speed
 
 
+class Sounds:
+    def __init__(self):
+        pygame.init()
+        self.volume = 100
+        shotgun_shot_sound_file = "data/sounds/shot.wav"
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+
+    def shotgun_shot(self):
+        shotgun_shot_sound_file = "data/sounds/shot.wav"
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+        return self.shotgun_shot_sound.play()
+
+    # def hit(self):
+    #     hit_sound_file = "data/sounds/hit.wav"
+    #     hit_sound = mixer.Sound(hit_sound_file)
+    #     return hit_sound.play()
+    def set_volume(self, value):
+        self.volume = value
+        self.shotgun_shot_sound.set_volume(value / 100)
+        pygame.mixer.music.set_volume(value / 100)
+
+    def get_volume(self):
+        return self.volume
+
+
 def game():
     global all_sprites, player_sprites, bullet_sprites, timer, guns_sprites, map_sprites, enemies_sprites, camera, player, clock, size, width, height
     size = width, height = 1600, 1080
@@ -256,7 +286,7 @@ def game():
         pygame.display.flip()
 
 
-class Example(QWidget):
+class Menu(QMainWindow):
     def __init__(self):
         self.count = 0
         super().__init__()
@@ -282,14 +312,47 @@ class Example(QWidget):
         game()
 
     def settings(self):
-        pass
+        self.next_window = Settings()
+        self.next_window.show()
+        self.close()
 
     def exit(self):
         exit()
 
 
+class Settings(QDialog):
+    def __init__(self, parent=None):
+        self.sounds = Sounds()
+        super().__init__(parent)
+        self.button_go_back = QPushButton("Назад", self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.setWindowTitle('Настройки')
+        self.setFixedSize(400, 300)
+        self.sound_label = QLabel(self)
+        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.move(20, 40)
+        self.slider_sound = QSlider(Qt.Horizontal, self)
+        self.slider_sound.setGeometry(30, 70, 200, 30)
+        self.slider_sound.setMinimum(0)
+        self.slider_sound.setMaximum(100)
+        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.valueChanged.connect(self.volume_changed)
+
+    def volume_changed(self, value):
+        s = "Громкость:" + " " + str(value) + "%"
+        self.sound_label.setText(s)
+        self.sounds.set_volume(value)
+
+    def go_back(self):
+        self.next_window = Menu()
+        self.next_window.show()
+        self.close()
+
+
 if __name__ == '__main__':
+    pygame.mixer.music.load('data/sounds/soundtrack.wav')
+    pygame.mixer.music.play(-1)
     app = QApplication(sys.argv)
-    ex = Example()
+    ex = Menu()
     ex.show()
     sys.exit(app.exec())
