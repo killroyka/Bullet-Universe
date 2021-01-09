@@ -228,6 +228,9 @@ class Sounds:
         return self.volume
 
 
+size = width, height = 1400, 900
+
+
 def game():
     global all_sprites, player_sprites, bullet_sprites, timer, guns_sprites, map_sprites, enemies_sprites, camera, player, clock
     pygame.init()
@@ -259,6 +262,14 @@ def game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.mixer.music.load('data/sounds/soundtrack.wav')
+                    pygame.mixer.music.play(-1)
+                    app = QApplication(sys.argv)
+                    ex = Menu()
+                    ex.show()
+                    sys.exit(app.exec())
 
         timer += 1
         timer = timer % 1000
@@ -316,6 +327,7 @@ class Menu(QMainWindow):
 
     def play(self):
         game()
+        self.close()
 
     def settings(self):
         self.next_window = Settings()
