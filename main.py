@@ -86,17 +86,18 @@ def draw_FPS(screen):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, group, player):
+    def __init__(self, pos_x, pos_y, group, player, speed=10, hp=100):
         super().__init__(group, all_sprites)
         self.images = [load_image("spinbotAnimation/spinbotanimation_1.png"),
                        load_image("spinbotAnimation/spinbotanimation_2.png"),
                        load_image("spinbotAnimation/spinbotanimation_3.png")]
         self.image = self.images[0]
         self.rect = self.image.get_rect().move(pos_x, pos_y)
-        self.speed = 9
+        self.speed = speed
         self.get_angle()
         self.collision = [0, 0, 0, 0]
         self.map = []
+        self.hp = hp
         for x in range(len(map)):
             self.map.append([])
             for y in range(len(map[x])):
@@ -135,11 +136,6 @@ class Enemy(pygame.sprite.Sprite):
         self.map[self.rect.centery // 128][self.rect.centerx // 128] = 0
 
         while self.map[self.playerx][self.playery] == "p":
-            for x in range(len(self.map)):
-                for y in range(len(self.map[0])):
-                    print(self.map[x][y], end="\t")
-                print()
-            print(d)
 
             for x in range(1, len(self.map)):
                 for y in range(1, len(map[0])):
@@ -188,12 +184,10 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self, player):
         self.get_angle()
-        Bullet(self.rect.centerx, self.rect.centery, self.angle, bullet_sprites, 20, enemy)
         check = [0, 0, 0]
         ax = self.rect.centerx
         ay = self.rect.centery
         for x in range(0, 1000, 10):
-            print(1)
             ax += self.speed * math.cos(self.angle)
             ay += self.speed * math.sin(self.angle)
             if player.rect.collidepoint(ax, ay):
@@ -201,15 +195,12 @@ class Enemy(pygame.sprite.Sprite):
                 break
             for y in map_sprites:
                 if y.rect.collidepoint(ax, ay):
-                    check[1] = 1
+                    check[2] = 1
                     break
             else:
                 continue
             break
-        if timer % 7 == 0:
-            self.next_image()
-        if check != [0, 0, 0]:
-            print(check)
+        self.collision = check
         if check[1]:
 
             if self.t >= len(self.way):
@@ -225,6 +216,43 @@ class Enemy(pygame.sprite.Sprite):
         if check[0]:
             self.rect.x += self.speed * math.cos(self.angle)
             self.rect.y += self.speed * math.sin(self.angle)
+
+
+class Spin_bot(Enemy):
+    def __init__(self, pos_x, pos_y, group, player, speed=10):
+        super().__init__(pos_x, pos_y, group, player, speed=10)
+        self.form = 0
+
+    def circle_shoot(self):
+        for x in range(0, 13, 1):
+            Bullet(self.rect.centerx + 40 * math.cos(x / 2), self.rect.centery + 40 * math.sin(x / 2), self.angle,
+                   bullet_sprites, 10,
+                   enemy)
+
+    def transform(self):
+        if self.form == 1 and self.images.index(self.image) != 2:
+            self.image = self.images[self.images.index(self.image) + 1]
+            self.speed = 0
+        elif self.form == 0 and self.images.index(self.image) != 0:
+            self.image = self.images[self.images.index(self.image) - 1]
+            self.speed = 0
+
+    def update(self, player):
+        super().update(player)
+        print(((player.rect.centerx - self.rect.centerx) ** 2 + (player.rect.centery - self.rect.centery) ** 2) ** 0.5)
+        if ((player.rect.centerx - self.rect.centerx) ** 2 + (player.rect.centery - self.rect.centery) ** 2) ** 0.5 < 700 and self.collision[0]:
+            self.speed = 0
+            self.form = 1
+            self.transform()
+        elif self.collision[0]:
+            self.form = 0
+            self.transform()
+        if self.images.index(self.image) == 2:
+            self.speed = 5
+        else:
+            self.speed = 10
+        if timer % 50 == 0 and self.form == 1:
+            self.circle_shoot()
 
 
 class Tile(pygame.sprite.Sprite):
@@ -327,7 +355,7 @@ player = Player(500, 500, 0, player_sprites)
 timer = 0
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
-enemy = Enemy(800, 1400, enemies_sprites, player)
+enemy = Spin_bot(800, 1400, enemies_sprites, player, 10)
 
 map_sprites = draw_map(map)
 
