@@ -2,32 +2,42 @@ import pygame
 import sys
 import os
 import math
-import pprint
+from pprint import pprint
 import random
 from map import *
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog, \
+    QComboBox
+from PyQt5.QtCore import Qt
+from pygame import mixer
 from sounds import *
 from time import sleep as sl
 import pygame_menu
 
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+
 
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, image_name, pos_x, pos_y, angle, group):
+    def __init__(self, image_name, pos_x, pos_y, group):
         super().__init__(group, all_sprites)
         self.image = load_image(image_name)
-        self.angle = angle
+        self.image_name = image_name
+        self.image = pygame.transform.scale(self.image, (100, 100))
         self.coords = pos_x, pos_y
         self.last_angle = 0
+        self.rotate = 0
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
-    def rotate(self, img, pos, angle):
-        w, h = img.get_size()
-        img2 = pygame.Surface((w * 2, h * 2), pygame.SRCALPHA)
-        img2.blit(img, (w - pos[0], h - pos[1]))
-        return pygame.transform.rotate(img2, angle)
-
     def update(self, player):
-        self.image = self.rotate(self.image, player.rect.center, player.angle - self.last_angle / math.pi * 180)
-        self.last_angle = player.angle
+        # mouse_x, mouse_y = pygame.mouse.get_pos()
+        # rel_x, rel_y = mouse_x - self.coords[0], mouse_y - self.coords[1]
+        self.rotate += 5
+        self.rotate = self.rotate % 180
+        if self.rotate % 180 == 0:
+            self.image = load_image(self.image_name)
+            self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.rotate(self.image, 5)
+        self.rect = self.image.get_rect(center=(player.rect.x, player.rect.y))
 
 
 class ShotGun(Gun):
@@ -396,19 +406,45 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_d] and not collision[3]:
             self.rect.x += self.speed
 
+class Sounds:
+    def __init__(self):
+        pygame.init()
+        self.volume = 100
+        shotgun_shot_sound_file = "data/sounds/shot.wav"
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+
+    def shotgun_shot(self):
+        shotgun_shot_sound_file = "data/sounds/shot.wav"
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+        return self.shotgun_shot_sound.play()
+
+    # def hit(self):
+    #     hit_sound_file = "data/sounds/hit.wav"
+    #     hit_sound = mixer.Sound(hit_sound_file)
+    #     return hit_sound.play()
+    def set_volume(self, value):
+        self.volume = value
+        self.shotgun_shot_sound.set_volume(value / 100)
+        pygame.mixer.music.set_volume(value / 100)
+
+    def get_volume(self):
+        return self.volume
+
 
 pygame.init()
-size = width, height = 1080, 720
+size = width, height = 1600, 1080
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 player_sprites = pygame.sprite.Group()
 bullet_sprites = pygame.sprite.Group()
-player = Player(500, 500, 0, player_sprites)
+player = Player(500, 300, 0, player_sprites)
 timer = 0
 camera = Camera()
 enemies_sprites = pygame.sprite.Group()
-enemy = Spin_bot(800, 1400, enemies_sprites, player, 10)
+enemy = Spin_bot(500, 500, enemies_sprites, player)
 
 map_sprites = draw_map(map)
 
@@ -501,3 +537,139 @@ while True:
         camera.apply(x)
     clock.tick(60)
     pygame.display.flip()
+
+
+def set_screen_resolution(value):
+    global size, width, height
+    size = width, height = value[0], value[1]
+    print(size)
+
+
+class Menu(QMainWindow):
+    def __init__(self):
+        self.count = 0
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setFixedSize(600, 400)
+        self.setWindowTitle('Фокус со словами')
+        self.btn_play = QPushButton('Играть', self)
+        self.btn_play.resize(200, 40)
+        self.btn_play.move(10, 20)
+        self.btn_play.clicked.connect(self.play)
+        self.btn_settings = QPushButton('Настройки', self)
+        self.btn_settings.resize(200, 40)
+        self.btn_settings.move(10, 70)
+        self.btn_settings.clicked.connect(self.settings)
+        self.btn_exit = QPushButton('Выйти', self)
+        self.btn_exit.resize(200, 40)
+        self.btn_exit.move(10, 120)
+        self.btn_exit.clicked.connect(self.exit)
+
+    def play(self):
+        self.close()
+        game()
+
+    def settings(self):
+        self.next_window = Settings()
+        self.next_window.show()
+        self.close()
+
+    def exit(self):
+        exit()
+
+
+class Settings(QDialog):
+    def __init__(self, parent=None):
+        self.sounds = Sounds()
+        super().__init__(parent)
+        self.button_go_back = QPushButton("Назад", self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.setWindowTitle('Настройки')
+        self.setFixedSize(400, 300)
+        self.sound_label = QLabel(self)
+        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.move(20, 40)
+        self.slider_sound = QSlider(Qt.Horizontal, self)
+        self.slider_sound.setGeometry(30, 70, 200, 30)
+        self.slider_sound.setMinimum(0)
+        self.slider_sound.setMaximum(100)
+        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.valueChanged.connect(self.volume_changed)
+        self.resolutions_label = QLabel(self)
+        self.resolutions_label.setText("Разрешение:")
+        self.resolutions_label.move(20, 120)
+        self.resolutions = QComboBox(self)
+        self.resolutions.move(120, 115)
+        self.resolutions.resize(150, 30)
+        self.resolutions.addItem("800 × 600")
+        self.resolutions.addItem("1024 × 576")
+        self.resolutions.addItem("1200 × 720")
+        self.resolutions.addItem("1366 × 768")
+        self.resolutions.addItem("1440 × 900")
+        self.resolutions.addItem("1920 × 1080")
+        self.resolutions.activated[str].connect(self.resolution_changed)
+
+    def resolution_changed(self, text):
+        set_screen_resolution((int(text.split()[0]), int(text.split()[2])))
+
+    def volume_changed(self, value):
+        s = "Громкость:" + " " + str(value) + "%"
+        self.sound_label.setText(s)
+        self.sounds.set_volume(value)
+
+    def go_back(self):
+        self.next_window = Menu()
+        self.next_window.show()
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.close()
+
+
+class MenuInGame(QDialog):
+    def __init__(self, parent=None):
+        self.sounds = Sounds()
+        super().__init__(parent)
+        self.button_go_back = QPushButton("Назад", self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.setWindowTitle('Настройки')
+        self.setFixedSize(400, 300)
+        self.sound_label = QLabel(self)
+        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.move(20, 40)
+        self.slider_sound = QSlider(Qt.Horizontal, self)
+        self.slider_sound.setGeometry(30, 70, 200, 30)
+        self.slider_sound.setMinimum(0)
+        self.slider_sound.setMaximum(100)
+        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.valueChanged.connect(self.volume_changed)
+        self.button_exit = QPushButton("Выйти", self)
+        self.button_exit.move(145, 150)
+        self.button_exit.clicked.connect(self.exit)
+
+    def exit(self):
+        exit()
+
+    def volume_changed(self, value):
+        s = "Громкость:" + " " + str(value) + "%"
+        self.sound_label.setText(s)
+        self.sounds.set_volume(value)
+
+    def go_back(self):
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.close()
+
+
+if __name__ == '__main__':
+    pygame.mixer.music.load('data/sounds/soundtrack.wav')
+    pygame.mixer.music.play(-1)
+    app = QApplication(sys.argv)
+    ex = Menu()
+    ex.show()
+    sys.exit(app.exec())
