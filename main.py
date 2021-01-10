@@ -264,12 +264,8 @@ def game():
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-                    pygame.mixer.music.play(-1)
-                    app = QApplication(sys.argv)
-                    ex = Menu()
-                    ex.show()
-                    sys.exit(app.exec())
+                    next_window = Settings()
+                    next_window.show()
 
         timer += 1
         timer = timer % 1000
@@ -326,8 +322,8 @@ class Menu(QMainWindow):
         self.btn_exit.clicked.connect(self.exit)
 
     def play(self):
-        game()
         self.close()
+        game()
 
     def settings(self):
         self.next_window = Settings()
