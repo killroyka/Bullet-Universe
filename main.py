@@ -7,6 +7,7 @@ import random
 from map import *
 from sounds import *
 from time import sleep as sl
+import pygame_menu
 
 
 class Gun(pygame.sprite.Sprite):
@@ -240,7 +241,8 @@ class Spin_bot(Enemy):
     def update(self, player):
         super().update(player)
         print(((player.rect.centerx - self.rect.centerx) ** 2 + (player.rect.centery - self.rect.centery) ** 2) ** 0.5)
-        if ((player.rect.centerx - self.rect.centerx) ** 2 + (player.rect.centery - self.rect.centery) ** 2) ** 0.5 < 700 and self.collision[0]:
+        if ((player.rect.centerx - self.rect.centerx) ** 2 + (
+                player.rect.centery - self.rect.centery) ** 2) ** 0.5 < 700 and self.collision[0]:
             self.speed = 0
             self.form = 1
             self.transform()
@@ -317,7 +319,8 @@ class Player(pygame.sprite.Sprite):
 
     def draw_hp_reloading(self):
         pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
-        pygame.draw.rect(screen, (6, 22, 103), (width // 2, 0,  self.reloading * width // 200, height // 40))
+        pygame.draw.rect(screen, (6, 22, 103), (width // 2, 0, self.reloading * width // 200, height // 40))
+
     def update(self):
         self.draw_hp_reloading()
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -374,6 +377,11 @@ pygame.mixer.music.play(-1)
 #
 sounds = Sounds()
 shot_timer = 0
+
+skills_tree = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_DARK)
+exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
+exit_btn.set_background_color((255, 0, 0))
+skills_tree.mainloop(screen)
 while True:
     screen.fill("black")
     for event in pygame.event.get():
@@ -385,9 +393,11 @@ while True:
                     print(map[t][z], end="\t")
                 print()
             print(enemy.way)
-
             exit()
-
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                skills_tree.enable()
+                skills_tree.mainloop(screen)
     timer += 1
     timer = timer % 1000
     all_sprites.draw(screen)
@@ -407,6 +417,7 @@ while True:
                    "player")
             sounds.shotgun_shot()
             shot_timer = 0
+
     shot_timer += 1
     for x in bullet_sprites:
         if pygame.sprite.collide_mask(player, x) and x.whos != "player":
@@ -419,7 +430,7 @@ while True:
                 y.hp -= player.dmg
                 pygame.sprite.spritecollide(y, bullet_sprites, True)
                 if y.hp <= 0:
-                    #TODO нарисовать сломанного бота
+                    # TODO нарисовать сломанного бота
                     y.image = load_image("magnum.png")
                     enemies_sprites.remove(y)
 
