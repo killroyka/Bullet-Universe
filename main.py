@@ -46,6 +46,8 @@ def draw_map(map):
         for y in range(len(map[0]) - 1):
             if map[x][y] == "e":
                 Enemy(128 * y, 128 * x, enemies_sprites, player)
+            if map[x][y] == "s":
+                Spin_bot(128 * y, 128 * x, enemies_sprites, player)
             if map[x][y] == "#" and map[x][y - 1] != "#":
                 Tile("wall_textures/side_wall.png", y, x, map_sprites, reverse_x=True)
             if map[x][y] == "#" and map[x][y + 1] != "#":
@@ -188,19 +190,12 @@ class Enemy(pygame.sprite.Sprite):
         check = [0, 0, 0]
         ax = self.rect.centerx
         ay = self.rect.centery
-        for x in range(0, 1000, 10):
+        for x in range(0, 500, 10):
             ax += self.speed * math.cos(self.angle)
             ay += self.speed * math.sin(self.angle)
             if player.rect.collidepoint(ax, ay):
                 check[0] = 1
                 break
-            for y in map_sprites:
-                if y.rect.collidepoint(ax, ay):
-                    check[2] = 1
-                    break
-            else:
-                continue
-            break
         self.collision = check
         if check[1]:
 
@@ -240,7 +235,6 @@ class Spin_bot(Enemy):
 
     def update(self, player):
         super().update(player)
-        print(((player.rect.centerx - self.rect.centerx) ** 2 + (player.rect.centery - self.rect.centery) ** 2) ** 0.5)
         if ((player.rect.centerx - self.rect.centerx) ** 2 + (
                 player.rect.centery - self.rect.centery) ** 2) ** 0.5 < 700 and self.collision[0]:
             self.speed = 0
@@ -310,6 +304,9 @@ class Player(pygame.sprite.Sprite):
         super().__init__(group, all_sprites)
         self.hp = 100
         self.dmg = 10
+        self.xp = 0
+        self.shoot_speed = 50
+        self.level = 1
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
@@ -317,12 +314,58 @@ class Player(pygame.sprite.Sprite):
         self.speed = 40
         self.mask = pygame.mask.from_surface(self.image)
 
+    def player_shoot_speed_up(self, a):
+        if self.level > 0:
+            self.shoot_speed += a
+            self.level -= 1
+            level_lable.set_title(str(self.level))
+
+        else:
+            level_lable.set_title("not enogh level")
+
+    def hp_up(self, a):
+        if self.level > 0:
+            self.hp += a
+            self.level -= 1
+            level_lable.set_title(str(self.level))
+
+        else:
+            level_lable.set_title("not enogh level")
+
+    def speed_up(self, a):
+        if self.level > 0:
+            self.speed += a
+            self.level -= 1
+            level_lable.set_title(str(self.level))
+
+        else:
+            level_lable.set_title("not enogh level")
+
+    def print_aneble_skills(self, widget, menu):
+        widget.set_title(str(self.level))
+
     def draw_hp_reloading(self):
-        pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
+        self.print_aneble_skills(level_lable, skills_tree)
+        font = pygame.font.Font(None, 50)
+        text_hp = font.render("HP" + " " + str(self.hp), True, (21, 130, 131))
+        text_xp = font.render("XP" + " " + str(self.xp), True, (255, 130, 133))
+        if self.hp <= 100:
+            pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
+        else:
+            pygame.draw.rect(screen, (103, 6, 6), (0, 0, (self.hp - self.hp % 100) * width // 200, height // 40))
+            pygame.draw.rect(screen, (103, 6, 6), (0, height // 40, (self.hp - 100) * width // 200, height // 40))
         pygame.draw.rect(screen, (6, 22, 103), (width // 2, 0, self.reloading * width // 200, height // 40))
+        pygame.draw.rect(screen, (6, 130, 133), (0, height - height // 40, self.xp * width // 100, height // 40))
+        screen.blit(text_hp, (width // 4, height // 80))
+        a = text_xp.get_rect()
+        screen.blit(text_xp, (width // 2 - (text_xp.get_rect().width // 2), height - (height // 40 * 2)))
 
     def update(self):
         self.draw_hp_reloading()
+        if self.xp >= 100:
+            self.level += 1
+            self.xp = 0
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         rel_x, rel_y = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
                 self.rect.y + self.rect.size[1] // 2)
@@ -355,7 +398,7 @@ class Player(pygame.sprite.Sprite):
 
 
 pygame.init()
-size = width, height = 1600, 1080
+size = width, height = 1080, 720
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
@@ -379,8 +422,16 @@ sounds = Sounds()
 shot_timer = 0
 
 skills_tree = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_DARK)
+
+level_lable = skills_tree.add_label("your level", align=pygame_menu.locals.ALIGN_LEFT)
+level_lable.set_position(30, 30)
+level_lable.add_update_callback(player.print_aneble_skills)
+skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 5, align=pygame_menu.locals.ALIGN_TOP)
+skills_tree.add_button("self speed up + ", player.speed_up, 10, align=pygame_menu.locals.ALIGN_RIGHT)
+
 exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
 exit_btn.set_background_color((255, 0, 0))
+skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
 skills_tree.mainloop(screen)
 while True:
     screen.fill("black")
@@ -408,8 +459,15 @@ while True:
     guns_sprites.update(player)
     enemies_sprites.update(player)
     draw_FPS(screen)
-
-    if pygame.mouse.get_pressed(3)[0] and shot_timer >= 50:
+    if len(enemies_sprites.sprites()) == 0:
+        j = 5
+        while j > 0:
+            y = random.randint(0, len(map) - 1)
+            x = random.randint(0, len(map[0]) - 1)
+            if map[y][x] == '.':
+                Spin_bot(y * 128, x * 128, enemies_sprites, player, 10)
+                j -= 1
+    if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
         for x in range(-4, 3):
             Bullet(player.rect.centerx, player.rect.centery,
                    player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
@@ -423,7 +481,7 @@ while True:
         if pygame.sprite.collide_mask(player, x) and x.whos != "player":
             pygame.sprite.spritecollide(player, bullet_sprites, True)
             player.hp -= 10
-            player.update()
+            player.draw_hp_reloading()
             draw_FPS(screen)
         for y in enemies_sprites:
             if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
@@ -431,7 +489,10 @@ while True:
                 pygame.sprite.spritecollide(y, bullet_sprites, True)
                 if y.hp <= 0:
                     # TODO нарисовать сломанного бота
+                    player.xp += 50
+                    player.hp += 30
                     y.image = load_image("magnum.png")
+                    y.remove(all_sprites)
                     enemies_sprites.remove(y)
 
     for x in map_sprites:
