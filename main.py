@@ -208,8 +208,8 @@ class Player(pygame.sprite.Sprite):
 
 class Sounds:
     def __init__(self):
-        pygame.init()
         self.volume = 100
+        pygame.init()
         shotgun_shot_sound_file = "data/sounds/shot.wav"
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
@@ -230,8 +230,12 @@ class Sounds:
         pygame.mixer.music.set_volume(value / 100)
 
     def get_volume(self):
+        print(self.volume)
         return self.volume
 
+sounds = Sounds()
+pygame.mixer.music.load('data/sounds/soundtrack.wav')
+pygame.mixer.music.play(-1)
 
 size = width, height = 800, 600
 
@@ -260,7 +264,6 @@ def game():
     pygame.mixer.music.load('data/sounds/soundtrack.wav')
     pygame.mixer.music.play(-1)
     #
-    sounds = Sounds()
     gun = ShotGun('magnum.png', player.rect.centerx, player.rect.centery, guns_sprites)
     while True:
         screen.fill("black")
@@ -344,20 +347,19 @@ class Menu(QMainWindow):
 
 class Settings(QDialog):
     def __init__(self, parent=None):
-        self.sounds = Sounds()
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
         self.setWindowTitle('Настройки')
         self.setFixedSize(400, 300)
         self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.setText("Громкость:" + " " + str(sounds.get_volume()) + "%")
         self.sound_label.move(20, 40)
         self.slider_sound = QSlider(Qt.Horizontal, self)
         self.slider_sound.setGeometry(30, 70, 200, 30)
         self.slider_sound.setMinimum(0)
         self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
         self.resolutions_label = QLabel(self)
         self.resolutions_label.setText("Разрешение:")
@@ -379,7 +381,7 @@ class Settings(QDialog):
     def volume_changed(self, value):
         s = "Громкость:" + " " + str(value) + "%"
         self.sound_label.setText(s)
-        self.sounds.set_volume(value)
+        sounds.set_volume(value)
 
     def go_back(self):
         self.next_window = Menu()
@@ -393,20 +395,19 @@ class Settings(QDialog):
 
 class MenuInGame(QDialog):
     def __init__(self, parent=None):
-        self.sounds = Sounds()
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
         self.setWindowTitle('Меню')
         self.setFixedSize(400, 300)
         self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.setText("Громкость:" + " " + str(sounds.get_volume()) + "%")
         self.sound_label.move(20, 40)
         self.slider_sound = QSlider(Qt.Horizontal, self)
         self.slider_sound.setGeometry(30, 70, 200, 30)
         self.slider_sound.setMinimum(0)
         self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
         self.button_exit = QPushButton("Выйти", self)
         self.button_exit.move(145, 150)
@@ -418,7 +419,7 @@ class MenuInGame(QDialog):
     def volume_changed(self, value):
         s = "Громкость:" + " " + str(value) + "%"
         self.sound_label.setText(s)
-        self.sounds.set_volume(value)
+        sounds.set_volume(value)
 
     def go_back(self):
         self.close()
@@ -428,19 +429,7 @@ class MenuInGame(QDialog):
             self.close()
 
 
-class SkillTree(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.score_label = QLabel(self)
-        self.score_label.setText(str(Player.get_score()))
-        self.score_label.move(10, 10)
-        self.setFixedSize(600, 400)
-        self.setWindowTitle('Древо навыков')
-
-
 if __name__ == '__main__':
-    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-    pygame.mixer.music.play(-1)
     app = QApplication(sys.argv)
     ex = Menu()
     ex.show()
