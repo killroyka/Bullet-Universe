@@ -5,6 +5,7 @@ import math
 from pprint import pprint
 import random
 from map import *
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog, \
     QComboBox
 from PyQt5.QtCore import Qt
@@ -228,7 +229,7 @@ class Sounds:
         return self.volume
 
 
-size = width, height = 1400, 900
+size = width, height = 800, 600
 
 
 def game():
@@ -264,7 +265,7 @@ def game():
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    next_window = Settings()
+                    next_window = MenuInGame()
                     next_window.show()
 
         timer += 1
@@ -377,6 +378,47 @@ class Settings(QDialog):
         self.next_window = Menu()
         self.next_window.show()
         self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.close()
+
+
+class MenuInGame(QDialog):
+    def __init__(self, parent=None):
+        self.sounds = Sounds()
+        super().__init__(parent)
+        self.button_go_back = QPushButton("Назад", self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.setWindowTitle('Настройки')
+        self.setFixedSize(400, 300)
+        self.sound_label = QLabel(self)
+        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.move(20, 40)
+        self.slider_sound = QSlider(Qt.Horizontal, self)
+        self.slider_sound.setGeometry(30, 70, 200, 30)
+        self.slider_sound.setMinimum(0)
+        self.slider_sound.setMaximum(100)
+        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.valueChanged.connect(self.volume_changed)
+        self.button_exit = QPushButton("Выйти", self)
+        self.button_exit.move(145, 150)
+        self.button_exit.clicked.connect(self.exit)
+
+    def exit(self):
+        exit()
+
+    def volume_changed(self, value):
+        s = "Громкость:" + " " + str(value) + "%"
+        self.sound_label.setText(s)
+        self.sounds.set_volume(value)
+
+    def go_back(self):
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.close()
 
 
 if __name__ == '__main__':
