@@ -163,12 +163,16 @@ class Player(pygame.sprite.Sprite):
     image = load_image("spinbotAnimation/spinbot0.png")
 
     def __init__(self, pos_x, pos_y, angle, group):
+        self.score = 100
         super().__init__(group, all_sprites)
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.speed = 10
         self.mask = pygame.mask.from_surface(self.image)
+
+    def get_score(self):
+        return self.score
 
     def update(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -266,6 +270,9 @@ def game():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     next_window = MenuInGame()
+                    next_window.show()
+                if event.key == pygame.K_e:
+                    next_window = SkillTree()
                     next_window.show()
 
         timer += 1
@@ -390,7 +397,7 @@ class MenuInGame(QDialog):
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
-        self.setWindowTitle('Настройки')
+        self.setWindowTitle('Меню')
         self.setFixedSize(400, 300)
         self.sound_label = QLabel(self)
         self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
@@ -419,6 +426,16 @@ class MenuInGame(QDialog):
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
             self.close()
+
+
+class SkillTree(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.score_label = QLabel(self)
+        self.score_label.setText(str(Player.get_score()))
+        self.score_label.move(10, 10)
+        self.setFixedSize(600, 400)
+        self.setWindowTitle('Древо навыков')
 
 
 if __name__ == '__main__':
