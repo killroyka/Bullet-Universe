@@ -465,7 +465,7 @@ while True:
             y = random.randint(0, len(map) - 1)
             x = random.randint(0, len(map[0]) - 1)
             if map[y][x] == '.':
-                Spin_bot(y * 128, x * 128, enemies_sprites, player, 10)
+                Spin_bot(x * 128, y * 128, enemies_sprites, player, 10)
                 j -= 1
     if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
         for x in range(-4, 3):
