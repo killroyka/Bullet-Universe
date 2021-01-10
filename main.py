@@ -2,7 +2,7 @@ import pygame
 import sys
 import os
 import math
-from pprint import pprint
+import pprint
 import random
 from map import *
 from PyQt5 import QtCore, QtWidgets
@@ -118,6 +118,7 @@ class Enemy(pygame.sprite.Sprite):
         self.way = []
         self.playerx = (player.rect.centery - camera.ddx) // 128
         self.playery = (player.rect.centerx - camera.ddy) // 128
+        self.map[self.rect.y // 128][self.rect.x // 128] = 0
         print([[self.rect.x // 128], [self.rect.y // 128]])
 
         self.t = 0
@@ -405,271 +406,108 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_d] and not collision[3]:
             self.rect.x += self.speed
 
-class Sounds:
-    def __init__(self):
-        pygame.init()
-        self.volume = 100
-        shotgun_shot_sound_file = "data/sounds/shot.wav"
-        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
-        self.shotgun_shot_sound.set_volume(self.volume)
 
-    def shotgun_shot(self):
-        shotgun_shot_sound_file = "data/sounds/shot.wav"
-        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
-        self.shotgun_shot_sound.set_volume(self.volume)
-        return self.shotgun_shot_sound.play()
+pygame.init()
+size = width, height = 1080, 720
+screen = pygame.display.set_mode(size)
+clock = pygame.time.Clock()
+all_sprites = pygame.sprite.Group()
+player_sprites = pygame.sprite.Group()
+bullet_sprites = pygame.sprite.Group()
+player = Player(500, 500, 0, player_sprites)
+timer = 0
+camera = Camera()
+enemies_sprites = pygame.sprite.Group()
+enemy = Spin_bot(800, 1400, enemies_sprites, player, 10)
 
-    # def hit(self):
-    #     hit_sound_file = "data/sounds/hit.wav"
-    #     hit_sound = mixer.Sound(hit_sound_file)
-    #     return hit_sound.play()
-    def set_volume(self, value):
-        self.volume = value
-        self.shotgun_shot_sound.set_volume(value / 100)
-        pygame.mixer.music.set_volume(value / 100)
+map_sprites = draw_map(map)
 
-    def get_volume(self):
-        return self.volume
+guns_sprites = pygame.sprite.Group()
 
-def game():
-    global all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
-    pygame.init()
-    size = width, height = 1600, 1080
-    screen = pygame.display.set_mode(size)
-    clock = pygame.time.Clock()
-    all_sprites = pygame.sprite.Group()
-    player_sprites = pygame.sprite.Group()
-    bullet_sprites = pygame.sprite.Group()
-    player = Player(500, 300, 0, player_sprites)
-    timer = 0
-    camera = Camera()
-    enemies_sprites = pygame.sprite.Group()
-    enemy = Spin_bot(500, 500, enemies_sprites, player)
+# саундтрек
+pygame.mixer.music.load('data/sounds/soundtrack.wav')
+pygame.mixer.music.play(-1)
+#
+sounds = Sounds()
+shot_timer = 0
 
-    map_sprites = draw_map(map)
+skills_tree = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_DARK)
 
-    guns_sprites = pygame.sprite.Group()
+level_lable = skills_tree.add_label("your level", align=pygame_menu.locals.ALIGN_LEFT)
+level_lable.set_position(30, 30)
+level_lable.add_update_callback(player.print_aneble_skills)
+skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 5, align=pygame_menu.locals.ALIGN_TOP)
+skills_tree.add_button("self speed up + ", player.speed_up, 10, align=pygame_menu.locals.ALIGN_RIGHT)
 
-    # саундтрек
-    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-    pygame.mixer.music.play(-1)
-    #
-    sounds = Sounds()
-    shot_timer = 0
+exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
+exit_btn.set_background_color((255, 0, 0))
+skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
+skills_tree.mainloop(screen)
+while True:
+    screen.fill("black")
+    for event in pygame.event.get():
+        for x in enemy.way:
+            enemy.map[x[0]][x[1]] = "w"
+        if event.type == pygame.QUIT:
+            for t in range(len(enemy.map)):
+                for z in range(len(enemy.map[0])):
+                    print(map[t][z], end="\t")
+                print()
+            print(enemy.way)
+            exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                skills_tree.enable()
+                skills_tree.mainloop(screen)
+    timer += 1
+    timer = timer % 1000
+    all_sprites.draw(screen)
+    player_sprites.update()
 
-    skills_tree = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_DARK)
+    camera.update(player)
+    bullet_sprites.update()
+    guns_sprites.update(player)
+    enemies_sprites.update(player)
+    draw_FPS(screen)
+    if len(enemies_sprites.sprites()) == 0:
+        j = 5
+        while j > 0:
+            y = random.randint(0, len(map) - 1)
+            x = random.randint(0, len(map[0]) - 1)
+            if map[y][x] == '.':
+                Spin_bot(y * 128, x * 128, enemies_sprites, player, 10)
+                j -= 1
+    if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
+        for x in range(-4, 3):
+            Bullet(player.rect.centerx, player.rect.centery,
+                   player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
+                   random.randint(25, 30),
+                   "player")
+            sounds.shotgun_shot()
+            shot_timer = 0
 
-    level_lable = skills_tree.add_label("your level", align=pygame_menu.locals.ALIGN_LEFT)
-    level_lable.set_position(30, 30)
-    level_lable.add_update_callback(player.print_aneble_skills)
-    skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 5, align=pygame_menu.locals.ALIGN_TOP)
-    skills_tree.add_button("self speed up + ", player.speed_up, 10, align=pygame_menu.locals.ALIGN_RIGHT)
+    shot_timer += 1
+    for x in bullet_sprites:
+        if pygame.sprite.collide_mask(player, x) and x.whos != "player":
+            pygame.sprite.spritecollide(player, bullet_sprites, True)
+            player.hp -= 10
+            player.draw_hp_reloading()
+            draw_FPS(screen)
+        for y in enemies_sprites:
+            if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
+                y.hp -= player.dmg
+                pygame.sprite.spritecollide(y, bullet_sprites, True)
+                if y.hp <= 0:
+                    # TODO нарисовать сломанного бота
+                    player.xp += 50
+                    player.hp += 30
+                    y.image = load_image("magnum.png")
+                    y.remove(all_sprites)
+                    enemies_sprites.remove(y)
 
-    exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
-    exit_btn.set_background_color((255, 0, 0))
-    skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
-    skills_tree.mainloop(screen)
-    while True:
-        screen.fill("black")
-        for event in pygame.event.get():
-            for x in enemy.way:
-                enemy.map[x[0]][x[1]] = "w"
-            if event.type == pygame.QUIT:
-                for t in range(len(enemy.map)):
-                    for z in range(len(enemy.map[0])):
-                        print(map[t][z], end="\t")
-                    print()
-                print(enemy.way)
-                exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_e:
-                    skills_tree.enable()
-                    skills_tree.mainloop(screen)
-        timer += 1
-        timer = timer % 1000
-        all_sprites.draw(screen)
-        player_sprites.update()
-
-        camera.update(player)
-        bullet_sprites.update()
-        guns_sprites.update(player)
-        enemies_sprites.update(player)
-        draw_FPS(screen)
-        if len(enemies_sprites.sprites()) == 0:
-            j = 5
-            while j > 0:
-                y = random.randint(0, len(map) - 1)
-                x = random.randint(0, len(map[0]) - 1)
-                if map[y][x] == '.':
-                    Spin_bot(x * 128 + camera.ddx, y* 128 + camera.ddy, enemies_sprites, player, 10)
-                    j -= 1
-        if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
-            for x in range(-4, 3):
-                Bullet(player.rect.centerx, player.rect.centery,
-                       player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
-                       random.randint(25, 30),
-                       "player")
-                sounds.shotgun_shot()
-                shot_timer = 0
-
-        shot_timer += 1
-        for x in bullet_sprites:
-            if pygame.sprite.collide_mask(player, x) and x.whos != "player":
-                pygame.sprite.spritecollide(player, bullet_sprites, True)
-                player.hp -= 10
-                player.draw_hp_reloading()
-                draw_FPS(screen)
-            for y in enemies_sprites:
-                if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
-                    y.hp -= player.dmg
-                    pygame.sprite.spritecollide(y, bullet_sprites, True)
-                    if y.hp <= 0:
-                        # TODO нарисовать сломанного бота
-                        player.xp += 50
-                        player.hp += 30
-                        y.image = load_image("magnum.png")
-                        y.remove(all_sprites)
-                        enemies_sprites.remove(y)
-
-        for x in map_sprites:
-            j = pygame.sprite.spritecollide(x, bullet_sprites, True)
-        for x in all_sprites:
-            camera.apply(x)
-        clock.tick(60)
-        pygame.display.flip()
-
-
-def set_screen_resolution(value):
-    global size, width, height
-    size = width, height = value[0], value[1]
-    print(size)
-
-
-class Menu(QMainWindow):
-    def __init__(self):
-        self.count = 0
-        super().__init__()
-        self.initUI()
-
-    def initUI(self):
-        self.setFixedSize(600, 400)
-        self.setWindowTitle('Фокус со словами')
-        self.btn_play = QPushButton('Играть', self)
-        self.btn_play.resize(200, 40)
-        self.btn_play.move(10, 20)
-        self.btn_play.clicked.connect(self.play)
-        self.btn_settings = QPushButton('Настройки', self)
-        self.btn_settings.resize(200, 40)
-        self.btn_settings.move(10, 70)
-        self.btn_settings.clicked.connect(self.settings)
-        self.btn_exit = QPushButton('Выйти', self)
-        self.btn_exit.resize(200, 40)
-        self.btn_exit.move(10, 120)
-        self.btn_exit.clicked.connect(self.exit)
-
-    def play(self):
-        self.close()
-        game()
-
-    def settings(self):
-        self.next_window = Settings()
-        self.next_window.show()
-        self.close()
-
-    def exit(self):
-        exit()
-
-
-class Settings(QDialog):
-    def __init__(self, parent=None):
-        self.sounds = Sounds()
-        super().__init__(parent)
-        self.button_go_back = QPushButton("Назад", self)
-        self.button_go_back.clicked.connect(self.go_back)
-        self.setWindowTitle('Настройки')
-        self.setFixedSize(400, 300)
-        self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
-        self.sound_label.move(20, 40)
-        self.slider_sound = QSlider(Qt.Horizontal, self)
-        self.slider_sound.setGeometry(30, 70, 200, 30)
-        self.slider_sound.setMinimum(0)
-        self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
-        self.slider_sound.valueChanged.connect(self.volume_changed)
-        self.resolutions_label = QLabel(self)
-        self.resolutions_label.setText("Разрешение:")
-        self.resolutions_label.move(20, 120)
-        self.resolutions = QComboBox(self)
-        self.resolutions.move(120, 115)
-        self.resolutions.resize(150, 30)
-        self.resolutions.addItem("800 × 600")
-        self.resolutions.addItem("1024 × 576")
-        self.resolutions.addItem("1200 × 720")
-        self.resolutions.addItem("1366 × 768")
-        self.resolutions.addItem("1440 × 900")
-        self.resolutions.addItem("1920 × 1080")
-        self.resolutions.activated[str].connect(self.resolution_changed)
-
-    def resolution_changed(self, text):
-        set_screen_resolution((int(text.split()[0]), int(text.split()[2])))
-
-    def volume_changed(self, value):
-        s = "Громкость:" + " " + str(value) + "%"
-        self.sound_label.setText(s)
-        self.sounds.set_volume(value)
-
-    def go_back(self):
-        self.next_window = Menu()
-        self.next_window.show()
-        self.close()
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
-
-
-class MenuInGame(QDialog):
-    def __init__(self, parent=None):
-        self.sounds = Sounds()
-        super().__init__(parent)
-        self.button_go_back = QPushButton("Назад", self)
-        self.button_go_back.clicked.connect(self.go_back)
-        self.setWindowTitle('Настройки')
-        self.setFixedSize(400, 300)
-        self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
-        self.sound_label.move(20, 40)
-        self.slider_sound = QSlider(Qt.Horizontal, self)
-        self.slider_sound.setGeometry(30, 70, 200, 30)
-        self.slider_sound.setMinimum(0)
-        self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
-        self.slider_sound.valueChanged.connect(self.volume_changed)
-        self.button_exit = QPushButton("Выйти", self)
-        self.button_exit.move(145, 150)
-        self.button_exit.clicked.connect(self.exit)
-
-    def exit(self):
-        exit()
-
-    def volume_changed(self, value):
-        s = "Громкость:" + " " + str(value) + "%"
-        self.sound_label.setText(s)
-        self.sounds.set_volume(value)
-
-    def go_back(self):
-        self.close()
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
-
-
-if __name__ == '__main__':
-    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-    pygame.mixer.music.play(-1)
-    app = QApplication(sys.argv)
-    ex = Menu()
-    ex.show()
-    sys.exit(app.exec())
+    for x in map_sprites:
+        j = pygame.sprite.spritecollide(x, bullet_sprites, True)
+    for x in all_sprites:
+        camera.apply(x)
+    clock.tick(60)
+    pygame.display.flip()
