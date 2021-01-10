@@ -111,6 +111,8 @@ class Enemy(pygame.sprite.Sprite):
         self.collision = [0, 0, 0, 0]
         self.map = []
         self.hp = hp
+        self.rast = ((player.rect.centerx - self.rect.centerx) ** 2 + (
+                player.rect.centery - self.rect.centery) ** 2) ** 0.5
         for x in range(len(map)):
             self.map.append([])
             for y in range(len(map[x])):
@@ -144,6 +146,7 @@ class Enemy(pygame.sprite.Sprite):
         self.t = 0
         self.playerx = (player.rect.centery - camera.ddy) // 128
         self.playery = (player.rect.centerx - camera.ddx) // 128
+
         self.map[self.playerx][self.playery] = "p"
         self.map[self.rect.centery // 128][self.rect.centerx // 128] = 0
 
@@ -195,32 +198,34 @@ class Enemy(pygame.sprite.Sprite):
         self.map[self.playerx][self.playery] = '.'
 
     def update(self, player):
-        self.get_angle()
-        check = [0, 0, 0]
-        ax = self.rect.centerx
-        ay = self.rect.centery
-        for x in range(0, 500, 10):
-            ax += self.speed * math.cos(self.angle)
-            ay += self.speed * math.sin(self.angle)
-            if player.rect.collidepoint(ax, ay):
-                check[0] = 1
-                break
-        self.collision = check
-        if check[1]:
+        self.rast = ((player.rect.centerx - self.rect.centerx) ** 2 + (
+                player.rect.centery - self.rect.centery) ** 2) ** 0.5
+        if self.rast < 500:
+            self.get_angle()
 
-            if self.t >= len(self.way):
-                self.update_way()
-            if self.rect.centerx // 128 != self.way[self.t][0] or self.rect.centery // 128 != self.way[self.t][1]:
-                self.rect.centerx -= (self.rect.centerx // 128 - self.way[self.t][0]) * (self.speed // 2)
-                self.rect.centery -= (self.rect.centery // 128 - self.way[self.t][1]) * (self.speed // 2)
-            if self.rect.x // 128 == self.playerx and self.rect.y // 128 == self.playery:
-                self.update_way()
-            else:
-                self.t += 1
-
-        if check[0]:
-            self.rect.x += self.speed * math.cos(self.angle)
-            self.rect.y += self.speed * math.sin(self.angle)
+            check = [0, 0, 0]
+            ax = self.rect.centerx
+            ay = self.rect.centery
+            for x in range(50):
+                ax += 60 * math.cos(self.angle)
+                ay += 60 * math.sin(self.angle)
+                if player.rect.collidepoint(ax, ay):
+                    check[0] = 1
+                    break
+            self.collision = check
+            if check[0]:
+                self.rect.x += self.speed * math.cos(self.angle)
+                self.rect.y += self.speed * math.sin(self.angle)
+            if check[1]:
+                if self.t >= len(self.way):
+                    self.update_way()
+                if self.rect.centerx // 128 != self.way[self.t][0] or self.rect.centery // 128 != self.way[self.t][1]:
+                    self.rect.centerx -= (self.rect.centerx // 128 - self.way[self.t][0]) * (self.speed // 2)
+                    self.rect.centery -= (self.rect.centery // 128 - self.way[self.t][1]) * (self.speed // 2)
+                if self.rect.x // 128 == self.playerx and self.rect.y // 128 == self.playery:
+                    self.update_way()
+                else:
+                    self.t += 1
 
 
 class Spin_bot(Enemy):
@@ -235,28 +240,30 @@ class Spin_bot(Enemy):
                    "enemy")
 
     def transform(self):
-        if self.form == 1 and self.images.index(self.image) != 2:
+        if self.form == 1 and self.images.index(self.image) <= 1:
             self.image = self.images[self.images.index(self.image) + 1]
-            self.speed = 0
-        elif self.form == 0 and self.images.index(self.image) != 0:
+            self.speed = 5
+        elif self.form == 0 and self.images.index(self.image) >= 1:
             self.image = self.images[self.images.index(self.image) - 1]
-            self.speed = 0
+            self.speed = 10
+        else:
+            self.speed = 10
 
     def update(self, player):
         super().update(player)
-        if ((player.rect.centerx - self.rect.centerx) ** 2 + (
-                player.rect.centery - self.rect.centery) ** 2) ** 0.5 < 700 and self.collision[0]:
-            self.speed = 0
+        if self.rast < 700 and self.collision[0]:
+            self.speed = 10
             self.form = 1
             self.transform()
         elif self.collision[0]:
             self.form = 0
+            self.speed = 10
             self.transform()
         if self.images.index(self.image) == 2:
             self.speed = 5
-        else:
+        elif self.images.index(self.image) == 0:
             self.speed = 10
-        if timer % 50 == 0 and self.form == 1:
+        if timer % 50 == 0 and self.collision[0] and self.rast < 450:
             self.circle_shoot()
 
 
@@ -279,13 +286,18 @@ class Bullet(pygame.sprite.Sprite):
         self.image = pygame.Surface([10, 10], pygame.SRCALPHA)
         pygame.draw.circle(self.image, "red", (5, 5), 5)
         self.rect = self.image.get_rect().move(pos_x, pos_y)
-        self.speed = speed
+        if whos == "enemy":
+            self.speed = 20
+        else:
+            self.speed = speed
         self.angle = angle
         self.whos = whos
+        self.cos = self.speed * math.cos(self.angle)
+        self.sin = self.speed * math.sin(self.angle)
 
     def update(self):
-        self.rect.x += self.speed * math.cos(self.angle)
-        self.rect.y += self.speed * math.sin(self.angle)
+        self.rect.x += self.cos
+        self.rect.y += self.sin
 
 
 class Camera:
@@ -315,7 +327,7 @@ class Player(pygame.sprite.Sprite):
         self.dmg = 10
         self.xp = 0
         self.shoot_speed = 50
-        self.level = 1
+        self.level = 100
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
@@ -325,7 +337,7 @@ class Player(pygame.sprite.Sprite):
 
     def player_shoot_speed_up(self, a):
         if self.level > 0:
-            self.shoot_speed += a
+            self.shoot_speed -= a
             self.level -= 1
             level_lable.set_title(str(self.level))
 
@@ -393,17 +405,18 @@ class Player(pygame.sprite.Sprite):
                 if x.image_name == "wall_textures/side_wall.png" and x.reverse_x:
                     collision[3] = 1
         if [keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]].count(1) == 2:
-            self.speed = (self.speed ** 2) ** 0.5
+            a = 2
         else:
-            self.speed = 10
+            a = 1
         if keys[pygame.K_w] and not collision[0]:
-            self.rect.y += -self.speed
+            self.rect.y += -self.speed // a
         if keys[pygame.K_s] and not collision[1]:
-            self.rect.y += self.speed
+            self.rect.y += self.speed // a
         if keys[pygame.K_a] and not collision[2]:
-            self.rect.x += -self.speed
+            self.rect.x += -self.speed // a
         if keys[pygame.K_d] and not collision[3]:
-            self.rect.x += self.speed
+            self.rect.x += self.speed // a
+
 
 class Sounds:
     def __init__(self):
@@ -431,10 +444,11 @@ class Sounds:
     def get_volume(self):
         return self.volume
 
+
 def game():
     global all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
-    size = width, height = 1600, 1080
+    size = width, height = 1680, 1080
     screen = pygame.display.set_mode(size)
     clock = pygame.time.Clock()
     all_sprites = pygame.sprite.Group()
@@ -472,8 +486,6 @@ def game():
     while True:
         screen.fill("black")
         for event in pygame.event.get():
-            for x in enemy.way:
-                enemy.map[x[0]][x[1]] = "w"
             if event.type == pygame.QUIT:
                 for t in range(len(enemy.map)):
                     for z in range(len(enemy.map[0])):
@@ -486,22 +498,20 @@ def game():
                     skills_tree.enable()
                     skills_tree.mainloop(screen)
         timer += 1
-        timer = timer % 1000
         all_sprites.draw(screen)
         player_sprites.update()
-
         camera.update(player)
         bullet_sprites.update()
         guns_sprites.update(player)
         enemies_sprites.update(player)
         draw_FPS(screen)
         if len(enemies_sprites.sprites()) == 0:
-            j = 5
+            j = 3
             while j > 0:
                 y = random.randint(0, len(map) - 1)
                 x = random.randint(0, len(map[0]) - 1)
                 if map[y][x] == '.':
-                    Spin_bot(x * 128 + camera.ddx, y* 128 + camera.ddy, enemies_sprites, player, 10)
+                    Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
                     j -= 1
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
             for x in range(-4, 3):
@@ -517,22 +527,18 @@ def game():
             if pygame.sprite.collide_mask(player, x) and x.whos != "player":
                 pygame.sprite.spritecollide(player, bullet_sprites, True)
                 player.hp -= 10
-                player.draw_hp_reloading()
-                draw_FPS(screen)
             for y in enemies_sprites:
                 if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
                     y.hp -= player.dmg
                     pygame.sprite.spritecollide(y, bullet_sprites, True)
                     if y.hp <= 0:
-                        # TODO нарисовать сломанного бота
                         player.xp += 50
                         player.hp += 30
-                        y.image = load_image("magnum.png")
                         y.remove(all_sprites)
                         enemies_sprites.remove(y)
 
         for x in map_sprites:
-            j = pygame.sprite.spritecollide(x, bullet_sprites, True)
+            pygame.sprite.spritecollide(x, bullet_sprites, True)
         for x in all_sprites:
             camera.apply(x)
         clock.tick(60)
