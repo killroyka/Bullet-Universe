@@ -17,6 +17,7 @@ import pygame_menu
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
 
+# TODO добавить текстуры оружия в угол с прозрачностью
 class Gun(pygame.sprite.Sprite):
     def __init__(self, group, reload, pos_x=0, pos_y=0):
         super().__init__(group)
@@ -25,6 +26,9 @@ class Gun(pygame.sprite.Sprite):
 
     def shot(self):
         Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
+
+    def update(self):
+        pass
 
 
 class ShotGun(Gun):
@@ -323,7 +327,7 @@ class Camera:
 
 
 class Player(pygame.sprite.Sprite):
-    image = load_image("spinbotAnimation/spinbot0.png")
+    image = load_image("hero_sprites/hero_1_1.png")
 
     def __init__(self, pos_x, pos_y, angle, group):
         super().__init__(group, all_sprites)
@@ -338,7 +342,13 @@ class Player(pygame.sprite.Sprite):
         self.reloading = 100
         self.speed = 15
         self.mask = pygame.mask.from_surface(self.image)
-        self.gun_type= 0
+        self.gun_type = 0
+        self.images = [[load_image("hero_sprites/hero_0_1.png"), load_image("hero_sprites/hero_0_2.png"),
+                        load_image("hero_sprites/hero_0_3.png"), load_image("hero_sprites/hero_0_4.png")],
+                       [load_image("hero_sprites/hero_1_1.png"), load_image("hero_sprites/hero_1_2.png"),
+                        load_image("hero_sprites/hero_1_3.png"), load_image("hero_sprites/hero_1_4.png")],
+                       [load_image("hero_sprites/hero_2_1.png"), load_image("hero_sprites/hero_2_2.png"),
+                        load_image("hero_sprites/hero_2_3.png"), load_image("hero_sprites/hero_2_4.png")]]
 
     def player_shoot_speed_up(self, a):
         if self.level > 0:
@@ -415,13 +425,30 @@ class Player(pygame.sprite.Sprite):
         else:
             a = 1
         if keys[pygame.K_w] and not collision[0]:
-            self.rect.y += -self.speed // a
+            if a == 2:
+                self.rect.y += -((self.speed ** 2) ** 0.5)
+            else:
+                self.rect.y += -self.speed
+            self.image = self.images[(timer // 10) % 3][3]
         if keys[pygame.K_s] and not collision[1]:
-            self.rect.y += self.speed // a
+            if a == 2:
+                self.rect.y += ((self.speed ** 2) ** 0.5)
+            else:
+                self.rect.y += self.speed
+            self.image = self.images[(timer // 10) % 3][0]
         if keys[pygame.K_a] and not collision[2]:
-            self.rect.x += -self.speed // a
+            if a == 2:
+                self.rect.x += -((self.speed ** 2) ** 0.5)
+            else:
+                self.rect.x += -self.speed // a
+                self.image = self.images[(timer // 10) % 3][1]
+
         if keys[pygame.K_d] and not collision[3]:
-            self.rect.x += self.speed // a
+            if a == 2:
+                self.rect.x += ((self.speed ** 2) ** 0.5)
+            else:
+                self.rect.x += self.speed // a
+            self.image = self.images[(timer // 10) % 3][2]
 
 
 class Sounds:
@@ -509,22 +536,20 @@ def game():
         player_sprites.update()
         camera.update(player)
         bullet_sprites.update()
-        guns_sprites.update(player)
         enemies_sprites.update(player)
         draw_FPS(screen)
-        # if len(enemies_sprites.sprites()) == 0:
-        #     j = 3
-        #     while j > 0:
-        #         y = random.randint(0, len(map) - 1)
-        #         x = random.randint(0, len(map[0]) - 1)
-        #         if map[y][x] == '.':
-        #             Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
-        #             j -= 1
+        if len(enemies_sprites.sprites()) == 0:
+            j = 3
+            while j > 0:
+                y = random.randint(0, len(map) - 1)
+                x = random.randint(0, len(map[0]) - 1)
+                if map[y][x] == '.':
+                    Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
+                    j -= 1
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
             guns[player.gun_type].shot()
             sounds.shotgun_shot()
             shot_timer = 0
-
         shot_timer += 1
         for x in bullet_sprites:
             if pygame.sprite.collide_mask(player, x) and x.whos != "player":
