@@ -18,26 +18,13 @@ pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
 
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, image_name, pos_x, pos_y, group):
-        super().__init__(group, all_sprites)
-        self.image = load_image(image_name)
-        self.image_name = image_name
-        self.image = pygame.transform.scale(self.image, (100, 100))
+    def __init__(self, group, reload, pos_x=0, pos_y=0):
+        super().__init__(group)
         self.coords = pos_x, pos_y
-        self.last_angle = 0
-        self.rotate = 0
-        self.rect = self.image.get_rect().move(pos_x, pos_y)
+        self.reload = reload
 
-    def update(self, player):
-        # mouse_x, mouse_y = pygame.mouse.get_pos()
-        # rel_x, rel_y = mouse_x - self.coords[0], mouse_y - self.coords[1]
-        self.rotate += 5
-        self.rotate = self.rotate % 180
-        if self.rotate % 180 == 0:
-            self.image = load_image(self.image_name)
-            self.image = pygame.transform.scale(self.image, (100, 100))
-        self.image = pygame.transform.rotate(self.image, 5)
-        self.rect = self.image.get_rect(center=(player.rect.x, player.rect.y))
+    def shot(self):
+        Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
 
 
 class ShotGun(Gun):
@@ -46,7 +33,24 @@ class ShotGun(Gun):
             Bullet(player.rect.x + player.rect.size[0] // 2, player.rect.y + player.rect.size[1] // 2,
                    player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
                    random.randint(25, 30),
-                   player)
+                   "player")
+
+
+class SpinGun(Gun):
+    def shot(self):
+        for x in range(0, 13, 1):
+            Bullet(player.rect.centerx + 40 * math.cos(x / 2), player.rect.centery + 40 * math.sin(x / 2), player.angle,
+                   bullet_sprites, 10,
+                   "player")
+
+
+class WallGun(Gun):
+    def shot(self):
+        for x in range(-4, 5):
+            Bullet(player.rect.centerx + x * 5 * math.cos(player.angle),
+                   player.rect.centery + x * 5 * math.sin(math.sin(player.angle)), player.angle,
+                   bullet_sprites, 10,
+                   "player")
 
 
 def draw_map(map):
@@ -332,17 +336,19 @@ class Player(pygame.sprite.Sprite):
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.reloading = 100
-        self.speed = 40
+        self.speed = 15
         self.mask = pygame.mask.from_surface(self.image)
+        self.gun_type= 0
 
     def player_shoot_speed_up(self, a):
         if self.level > 0:
             self.shoot_speed -= a
             self.level -= 1
             level_lable.set_title(str(self.level))
+            level_lable.set_title("not enogh level")
 
         else:
-            level_lable.set_title("not enogh level")
+            pass
 
     def hp_up(self, a):
         if self.level > 0:
@@ -448,7 +454,7 @@ class Sounds:
 def game():
     global all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
-    size = width, height = 1680, 1080
+    size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
     clock = pygame.time.Clock()
     all_sprites = pygame.sprite.Group()
@@ -458,7 +464,7 @@ def game():
     timer = 0
     camera = Camera()
     enemies_sprites = pygame.sprite.Group()
-    enemy = Spin_bot(500, 500, enemies_sprites, player)
+    # enemy = Spin_bot(500, 500, enemies_sprites, player)
 
     map_sprites = draw_map(map)
 
@@ -470,7 +476,6 @@ def game():
     #
     sounds = Sounds()
     shot_timer = 0
-
     skills_tree = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_DARK)
 
     level_lable = skills_tree.add_label("your level", align=pygame_menu.locals.ALIGN_LEFT)
@@ -482,21 +487,23 @@ def game():
     exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
     exit_btn.set_background_color((255, 0, 0))
     skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
-    skills_tree.mainloop(screen)
+    guns = [Gun(guns_sprites, player.shoot_speed), ShotGun(guns_sprites, player.shoot_speed),
+            SpinGun(guns_sprites, player.shoot_speed), WallGun(guns_sprites, player.shoot_speed)]
     while True:
         screen.fill("black")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                for t in range(len(enemy.map)):
-                    for z in range(len(enemy.map[0])):
-                        print(map[t][z], end="\t")
-                    print()
-                print(enemy.way)
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_e:
                     skills_tree.enable()
                     skills_tree.mainloop(screen)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 4:
+                    player.gun_type = (player.gun_type - 1) % 4
+                if event.button == 5:
+                    player.gun_type = (player.gun_type + 1) % 4
+                print(player.gun_type)
         timer += 1
         all_sprites.draw(screen)
         player_sprites.update()
@@ -505,22 +512,18 @@ def game():
         guns_sprites.update(player)
         enemies_sprites.update(player)
         draw_FPS(screen)
-        if len(enemies_sprites.sprites()) == 0:
-            j = 3
-            while j > 0:
-                y = random.randint(0, len(map) - 1)
-                x = random.randint(0, len(map[0]) - 1)
-                if map[y][x] == '.':
-                    Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
-                    j -= 1
+        # if len(enemies_sprites.sprites()) == 0:
+        #     j = 3
+        #     while j > 0:
+        #         y = random.randint(0, len(map) - 1)
+        #         x = random.randint(0, len(map[0]) - 1)
+        #         if map[y][x] == '.':
+        #             Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
+        #             j -= 1
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
-            for x in range(-4, 3):
-                Bullet(player.rect.centerx, player.rect.centery,
-                       player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
-                       random.randint(25, 30),
-                       "player")
-                sounds.shotgun_shot()
-                shot_timer = 0
+            guns[player.gun_type].shot()
+            sounds.shotgun_shot()
+            shot_timer = 0
 
         shot_timer += 1
         for x in bullet_sprites:
