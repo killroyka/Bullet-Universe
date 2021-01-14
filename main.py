@@ -11,27 +11,30 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMain
 from PyQt5.QtCore import Qt
 from pygame import mixer
 from sounds import *
-from time import sleep as sl
 import pygame_menu
 
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
-
-# TODO добавить текстуры оружия в угол с прозрачностью
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, group, reload, pos_x=0, pos_y=0):
+    def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group)
         self.coords = pos_x, pos_y
         self.reload = reload
+        self.image = image
+        self.image = pygame.transform.scale(self.image, (240, 60))
+        self.rect = self.image.get_rect().move(width - 240, height - 60)
 
     def shot(self):
         Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
 
-    def update(self):
-        pass
+    def draw(self):
+        screen.blit(self.image, (width - 240, height - 60))
 
 
 class ShotGun(Gun):
+    def __init__(self, group, reload, image, pos_x=0, pos_y=0):
+        super().__init__(group, reload, image, pos_x=0, pos_y=0)
+
     def shot(self):
         for x in range(-4, 3):
             Bullet(player.rect.x + player.rect.size[0] // 2, player.rect.y + player.rect.size[1] // 2,
@@ -41,6 +44,9 @@ class ShotGun(Gun):
 
 
 class SpinGun(Gun):
+    def __init__(self, group, reload, image, pos_x=0, pos_y=0):
+        super().__init__(group, reload, image, pos_x=0, pos_y=0)
+
     def shot(self):
         for x in range(0, 13, 1):
             Bullet(player.rect.centerx + 40 * math.cos(x / 2), player.rect.centery + 40 * math.sin(x / 2), player.angle,
@@ -49,6 +55,9 @@ class SpinGun(Gun):
 
 
 class WallGun(Gun):
+    def __init__(self, group, reload, image, pos_x=0, pos_y=0):
+        super().__init__(group, reload, image, pos_x=0, pos_y=0)
+
     def shot(self):
         for x in range(-4, 5):
             Bullet(player.rect.centerx + x * 5 * math.cos(player.angle),
@@ -104,6 +113,11 @@ def draw_FPS(screen):
     text = font.render(str(int(clock.get_fps())), True, (100, 255, 100))
     text_x = size[0] - text.get_width()
     screen.blit(text, (text_x, 0))
+
+
+class Helper(pygame.sprite.Sprite):
+    def __init__(self):
+        pass
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -287,6 +301,8 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = (pos_x * self.rect.size[0], pos_y * self.rect.size[1])
         self.mask = pygame.mask.from_surface(self.image)
 
+
+# TODO добавить ограничение по полету пули
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, angle, group, speed, whos):
@@ -479,7 +495,7 @@ class Sounds:
 
 
 def game():
-    global all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
+    global force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
     size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
@@ -492,6 +508,7 @@ def game():
     camera = Camera()
     enemies_sprites = pygame.sprite.Group()
     # enemy = Spin_bot(500, 500, enemies_sprites, player)
+    force_sprites = pygame.sprite.Group()
 
     map_sprites = draw_map(map)
 
@@ -514,8 +531,12 @@ def game():
     exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
     exit_btn.set_background_color((255, 0, 0))
     skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
-    guns = [Gun(guns_sprites, player.shoot_speed), ShotGun(guns_sprites, player.shoot_speed),
-            SpinGun(guns_sprites, player.shoot_speed), WallGun(guns_sprites, player.shoot_speed)]
+    guns = [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png")),
+            ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
+            SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
+            WallGun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png"))]
+
+    # TODO написать магазин
     while True:
         screen.fill("black")
         for event in pygame.event.get():
@@ -538,6 +559,8 @@ def game():
         bullet_sprites.update()
         enemies_sprites.update(player)
         draw_FPS(screen)
+        force_sprites.update()
+        guns[player.gun_type].draw()
         if len(enemies_sprites.sprites()) == 0:
             j = 3
             while j > 0:
@@ -558,10 +581,12 @@ def game():
             for y in enemies_sprites:
                 if pygame.sprite.collide_mask(x, y) and x.whos != "enemy":
                     y.hp -= player.dmg
-                    pygame.sprite.spritecollide(y, bullet_sprites, True)
+                    a = pygame.sprite.Group()
+                    a.add(x)
+                    pygame.sprite.spritecollide(y, a, True)
                     if y.hp <= 0:
-                        player.xp += 50
-                        player.hp += 30
+                        player.xp += random.randint(30, 60)
+                        player.hp += random.randint(20, 40)
                         y.remove(all_sprites)
                         enemies_sprites.remove(y)
 
