@@ -12,58 +12,141 @@ from PyQt5.QtCore import Qt
 from pygame import mixer
 from sounds import *
 import pygame_menu
-
+'''
+#    #     #    #       #       #####    ####    #   #  #    #    ##
+#   #      #    #       #       #    #  #    #    # #   #   #    #  #
+####       #    #       #       #    #  #    #     #    ####    #    #
+#  #       #    #       #       #####   #    #     #    #  #    ######
+#   #      #    #       #       #   #   #    #     #    #   #   #    #
+#    #     #    ######  ######  #    #   ####      #    #    #  #    #
+# and
+#
+#    #    ####   #    #   ####   #####    ####      #
+#    #   #    #  #   #   #    #  #    #  #    #     #
+#######  #    #  ####    #    #  #####   #    #     #
+     #   #    #  #  #    #    #  #    #  #    #     #
+     #   #    #  #   #   #    #  #    #  #    #     #
+     #    ####   #    #   ####   #####    ####      #
+'''
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+
 
 class Gun(pygame.sprite.Sprite):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group)
         self.coords = pos_x, pos_y
-        self.reload = reload
+        self.reloading = 100
+        self.reload_speed = reload
         self.image = image
+        self.shoot_speed = 20
         self.image = pygame.transform.scale(self.image, (240, 60))
         self.rect = self.image.get_rect().move(width - 240, height - 60)
+        self.mag = 12
+        self.mag_cargo = 12
+        self.ammo = 48
+        self.font = pygame.font.Font(None, 25)
 
     def shot(self):
-        Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
+        if self.mag > 0:
+            self.mag -= 1
+            Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
+
+    def reload(self):
+        if self.mag != 12 and self.ammo != 0:
+            self.reloading = 0
+        if self.ammo > 0 and self.ammo >= (self.mag_cargo - self.mag):
+            self.ammo = self.ammo - (self.mag_cargo - self.mag)
+            self.mag = self.mag_cargo
+            print(self.ammo)
+        else:
+            self.mag = self.mag + self.ammo
+            self.ammo = 0
+
+    def reload_draw(self):
+        if self.reloading != 100:
+            self.reloading += 1
+            self.shoot_speed = 0
+        else:
+            self.shoot_speed = 20
 
     def draw(self):
+        self.reload_draw()
+        ammo_info = self.font.render(str(self.mag) + "/" + str(self.ammo), True, (255, 197, 157))
         screen.blit(self.image, (width - 240, height - 60))
+        screen.blit(ammo_info, (width - 290, height - 60))
 
 
 class ShotGun(Gun):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
+        self.mag = 5
+        self.mag_cargo = 5
 
+        self.ammo = 20
+
+    def reload_draw(self):
+        if self.reloading != 100:
+            self.reloading += 1
+            self.shoot_speed = 0
+        else:
+            self.shoot_speed = 20
     def shot(self):
-        for x in range(-4, 3):
-            Bullet(player.rect.x + player.rect.size[0] // 2, player.rect.y + player.rect.size[1] // 2,
-                   player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
-                   random.randint(25, 30),
-                   "player")
+        if self.mag > 0:
+            self.mag -= 1
+            for x in range(-4, 3):
+                Bullet(player.rect.x + player.rect.size[0] // 2, player.rect.y + player.rect.size[1] // 2,
+                       player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
+                       random.randint(25, 30),
+                       "player")
 
 
 class SpinGun(Gun):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
+        self.mag = 7
+        self.mag_cargo = 7
 
+        self.ammo = 28
+
+    def reload_draw(self):
+        if self.reloading != 100:
+            self.reloading += 1
+            self.shoot_speed = 0
+        else:
+            self.shoot_speed = 20
     def shot(self):
-        for x in range(0, 13, 1):
-            Bullet(player.rect.centerx + 40 * math.cos(x / 2), player.rect.centery + 40 * math.sin(x / 2), player.angle,
-                   bullet_sprites, 10,
-                   "player")
+        if self.mag > 0:
+            self.mag -= 1
+
+            for x in range(0, 13, 1):
+                Bullet(player.rect.centerx + 40 * math.cos(x / 2), player.rect.centery + 40 * math.sin(x / 2),
+                       player.angle,
+                       bullet_sprites, 10,
+                       "player")
 
 
 class WallGun(Gun):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
+        self.mag = 3
+        self.mag_cargo = 3
 
+        self.ammo = 12
+
+    def reload_draw(self):
+        if self.reloading != 100:
+            self.reloading += 0.5
+            self.shoot_speed = 0
+        else:
+            self.shoot_speed = 20
     def shot(self):
-        for x in range(-4, 5):
-            Bullet(player.rect.centerx + x * 5 * math.cos(player.angle),
-                   player.rect.centery + x * 5 * math.sin(math.sin(player.angle)), player.angle,
-                   bullet_sprites, 10,
-                   "player")
+        if self.mag > 0:
+            self.mag -= 1
+            for x in range(-4, 5):
+                Bullet(player.rect.centerx + x * 5 * math.cos(player.angle),
+                       player.rect.centery + x * 5 * math.sin(math.sin(player.angle)), player.angle,
+                       bullet_sprites, 10,
+                       "player")
 
 
 def draw_map(map):
@@ -222,7 +305,7 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, player):
         self.rast = ((player.rect.centerx - self.rect.centerx) ** 2 + (
                 player.rect.centery - self.rect.centery) ** 2) ** 0.5
-        if self.rast < 500:
+        if self.rast < 1000:
             self.get_angle()
 
             check = [0, 0, 0]
@@ -234,6 +317,12 @@ class Enemy(pygame.sprite.Sprite):
                 if player.rect.collidepoint(ax, ay):
                     check[0] = 1
                     break
+                for y in map_sprites:
+                    if y.rect.collidepoint(ax, ay):
+                        break
+                else:
+                    continue
+                break
             self.collision = check
             if check[0]:
                 self.rect.x += self.speed * math.cos(self.angle)
@@ -350,7 +439,7 @@ class Player(pygame.sprite.Sprite):
         self.hp = 100
         self.dmg = 10
         self.xp = 0
-        self.shoot_speed = 50
+        self.shoot_speed = 1
         self.level = 100
         self.angle, self.group = angle, group
         self.image = Player.image
@@ -359,6 +448,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 15
         self.mask = pygame.mask.from_surface(self.image)
         self.gun_type = 0
+        self.money = 0
         self.images = [[load_image("hero_sprites/hero_0_1.png"), load_image("hero_sprites/hero_0_2.png"),
                         load_image("hero_sprites/hero_0_3.png"), load_image("hero_sprites/hero_0_4.png")],
                        [load_image("hero_sprites/hero_1_1.png"), load_image("hero_sprites/hero_1_2.png"),
@@ -397,6 +487,17 @@ class Player(pygame.sprite.Sprite):
     def print_aneble_skills(self, widget, menu):
         widget.set_title(str(self.level))
 
+    def add_gun(self, type):
+        if type == 1 and guns_eneble[1] != 1:
+            guns.append(ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")))
+            guns_eneble[1] = 1
+        if type == 2 and guns_eneble[2] != 1:
+            guns.append(SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")))
+            guns_eneble[2] = 1
+        if type == 3 and guns_eneble[3] != 1:
+            guns.append(WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png")))
+            guns_eneble[3] = 1
+
     def draw_hp_reloading(self):
         self.print_aneble_skills(level_lable, skills_tree)
         font = pygame.font.Font(None, 50)
@@ -407,10 +508,10 @@ class Player(pygame.sprite.Sprite):
         else:
             pygame.draw.rect(screen, (103, 6, 6), (0, 0, (self.hp - self.hp % 100) * width // 200, height // 40))
             pygame.draw.rect(screen, (103, 6, 6), (0, height // 40, (self.hp - 100) * width // 200, height // 40))
-        pygame.draw.rect(screen, (6, 22, 103), (width // 2, 0, self.reloading * width // 200, height // 40))
+        pygame.draw.rect(screen, (0, 109, 255),
+                         (width // 2, height - 50, guns[self.gun_type].reloading * width // 200, height - 60))
         pygame.draw.rect(screen, (6, 130, 133), (0, height - height // 40, self.xp * width // 100, height // 40))
         screen.blit(text_hp, (width // 4, height // 80))
-        a = text_xp.get_rect()
         screen.blit(text_xp, (width // 2 - (text_xp.get_rect().width // 2), height - (height // 40 * 2)))
 
     def update(self):
@@ -495,7 +596,7 @@ class Sounds:
 
 
 def game():
-    global force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
+    global guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
     size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
@@ -525,18 +626,33 @@ def game():
     level_lable = skills_tree.add_label("your level", align=pygame_menu.locals.ALIGN_LEFT)
     level_lable.set_position(30, 30)
     level_lable.add_update_callback(player.print_aneble_skills)
-    skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 5, align=pygame_menu.locals.ALIGN_TOP)
+    skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 0.05, align=pygame_menu.locals.ALIGN_TOP)
     skills_tree.add_button("self speed up + ", player.speed_up, 10, align=pygame_menu.locals.ALIGN_RIGHT)
 
     exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
     exit_btn.set_background_color((255, 0, 0))
     skills_tree.add_button("hp up", player.hp_up, 20, align=pygame_menu.locals.ALIGN_LEFT)
-    guns = [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png")),
-            ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
-            SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
-            WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
+    guns = [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png"))]
 
+    guns_eneble = [1, 0, 0, 0]
+    print(ShotGun in guns)
     # TODO написать магазин
+
+    #  [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png")),
+    #  ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
+    #  SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
+    #  WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
+    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE)
+    Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
+    Shop.add_label("buy bullets", align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_label("buy ultimate", align=pygame_menu.locals.ALIGN_RIGHT)
+    Shop_exit_button = Shop.add_button("exit", Shop.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
+    Shop_exit_button.set_background_color((255, 0, 0))
+    Shop.add_button("ShotGun", player.add_gun, 1, align=pygame_menu.locals.ALIGN_LEFT)
+    Shop.add_button("SpinGun", player.add_gun, 2, align=pygame_menu.locals.ALIGN_LEFT)
+    Shop.add_button("SniperRifle", player.add_gun, 3, align=pygame_menu.locals.ALIGN_LEFT)
+
+    # Shop.mainloop(screen)
     while True:
         screen.fill("black")
         for event in pygame.event.get():
@@ -546,11 +662,16 @@ def game():
                 if event.key == pygame.K_e:
                     skills_tree.enable()
                     skills_tree.mainloop(screen)
+                if event.key == pygame.K_m:
+                    Shop.enable()
+                    Shop.mainloop(screen)
+                if event.key == pygame.K_r:
+                    guns[player.gun_type].reload()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4:
-                    player.gun_type = (player.gun_type - 1) % 4
+                    player.gun_type = (player.gun_type - 1) % len(guns)
                 if event.button == 5:
-                    player.gun_type = (player.gun_type + 1) % 4
+                    player.gun_type = (player.gun_type + 1) % len(guns)
                 print(player.gun_type)
         timer += 1
         all_sprites.draw(screen)
@@ -569,7 +690,8 @@ def game():
                 if map[y][x] == '.':
                     Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
                     j -= 1
-        if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed:
+        if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed * guns[
+            player.gun_type].shoot_speed and player.shoot_speed * guns[player.gun_type].shoot_speed != 0:
             guns[player.gun_type].shot()
             sounds.shotgun_shot()
             shot_timer = 0
@@ -587,6 +709,7 @@ def game():
                     if y.hp <= 0:
                         player.xp += random.randint(30, 60)
                         player.hp += random.randint(20, 40)
+                        player.money += random.randint(10, 120)
                         y.remove(all_sprites)
                         enemies_sprites.remove(y)
 
@@ -732,3 +855,13 @@ if __name__ == '__main__':
     ex = Menu()
     ex.show()
     sys.exit(app.exec())
+'''
+ _________
+< The End >
+ ---------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+'''
