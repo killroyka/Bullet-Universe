@@ -534,7 +534,7 @@ def game():
     guns = [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png")),
             ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
             SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
-            WallGun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png"))]
+            WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
 
     # TODO написать магазин
     while True:
