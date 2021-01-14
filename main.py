@@ -233,6 +233,7 @@ class Sounds:
         print(self.volume)
         return self.volume
 
+
 sounds = Sounds()
 pygame.mixer.music.load('data/sounds/soundtrack.wav')
 pygame.mixer.music.play(-1)
@@ -318,19 +319,68 @@ class Menu(QMainWindow):
 
     def initUI(self):
         self.setFixedSize(600, 400)
-        self.setWindowTitle('Фокус со словами')
+        self.setWindowTitle('Bullet Universe')
         self.btn_play = QPushButton('Играть', self)
         self.btn_play.resize(200, 40)
-        self.btn_play.move(10, 20)
+        self.btn_play.move(200, 100)
         self.btn_play.clicked.connect(self.play)
+        self.btn_play.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }""")
         self.btn_settings = QPushButton('Настройки', self)
         self.btn_settings.resize(200, 40)
-        self.btn_settings.move(10, 70)
+        self.btn_settings.move(200, 150)
         self.btn_settings.clicked.connect(self.settings)
+        self.btn_settings.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }""")
         self.btn_exit = QPushButton('Выйти', self)
         self.btn_exit.resize(200, 40)
-        self.btn_exit.move(10, 120)
+        self.btn_exit.move(200, 200)
         self.btn_exit.clicked.connect(self.exit)
+        self.btn_exit.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        """)
 
     def play(self):
         self.close()
