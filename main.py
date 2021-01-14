@@ -340,6 +340,26 @@ class Menu(QMainWindow):
                         font: bold 20px;
                         color: white;
                         }""")
+        self.btn_FAQ = QPushButton('Как играть', self)
+        self.btn_FAQ.resize(200, 40)
+        self.btn_FAQ.clicked.connect(self.FAQ)
+        self.btn_FAQ.move(200, 200)
+        self.btn_FAQ.setStyleSheet("""QPushButton:!hover
+                                {
+                                background-color: blue;
+                                border-style: outset;
+                                border-radius: 15px;
+                                font: bold 20px;
+                                color: white;
+                                }
+                                QPushButton:hover
+                                {
+                                background-color: purple;
+                                border-style: outset;
+                                border-radius: 15px;
+                                font: bold 20px;
+                                color: white;
+                                }""")
         self.btn_settings = QPushButton('Настройки', self)
         self.btn_settings.resize(200, 40)
         self.btn_settings.move(200, 150)
@@ -362,7 +382,7 @@ class Menu(QMainWindow):
                         }""")
         self.btn_exit = QPushButton('Выйти', self)
         self.btn_exit.resize(200, 40)
-        self.btn_exit.move(200, 200)
+        self.btn_exit.move(200, 250)
         self.btn_exit.clicked.connect(self.exit)
         self.btn_exit.setStyleSheet("""QPushButton:!hover
                         {
@@ -381,6 +401,11 @@ class Menu(QMainWindow):
                         color: white;
                         }
                         """)
+
+    def FAQ(self):
+        self.next_window = FAQ()
+        self.next_window.show()
+        self.close()
 
     def play(self):
         self.close()
@@ -440,7 +465,7 @@ class Settings(QDialog):
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
+            self.go_back()
 
 
 class MenuInGame(QDialog):
@@ -476,7 +501,27 @@ class MenuInGame(QDialog):
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
+            self.go_back()
+
+
+class FAQ(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(300, 300)
+        self.setWindowTitle('Как играть')
+        self.button_go_back = QPushButton('Назад', self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.how_to_label = QLabel(self)
+        self.how_to_label.setText()
+
+    def go_back(self):
+        self.next_window = Menu()
+        self.next_window.show()
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.go_back()
 
 
 if __name__ == '__main__':
