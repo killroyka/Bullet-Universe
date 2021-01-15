@@ -8,7 +8,7 @@ from map import *
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog, \
     QComboBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread
 from pygame import mixer
 
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
@@ -235,7 +235,7 @@ class Sounds:
 
 
 sounds = Sounds()
-pygame.mixer.music.load('data/sounds/soundtrack.wav')
+pygame.mixer.music.load('data/sounds/cyberpunk1_22.mp3')
 pygame.mixer.music.play(-1)
 
 size = width, height = 800, 600
@@ -260,10 +260,6 @@ def game():
     map_sprites = draw_map(map)
 
     guns_sprites = pygame.sprite.Group()
-
-    # саундтрек
-    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-    pygame.mixer.music.play(-1)
     #
     gun = ShotGun('magnum.png', player.rect.centerx, player.rect.centery, guns_sprites)
     while True:
@@ -311,6 +307,21 @@ def set_screen_resolution(value):
     print(size)
 
 
+class SoundVolume(QThread):
+    def __init__(self, mainwindow, parent=None):
+        super().__init__()
+        self.mainwindow = mainwindow
+
+    def run(self):
+        self.volume = sounds.get_volume()
+        self.volume_before = sounds.get_volume()
+        while self.volume != 0:
+            self.volume -= 1
+            sounds.set_volume(self.volume)
+            pygame.time.delay(20)
+        sounds.set_volume(self.volume_before)
+
+
 class Menu(QMainWindow):
     def __init__(self):
         self.count = 0
@@ -318,6 +329,7 @@ class Menu(QMainWindow):
         self.initUI()
 
     def initUI(self):
+        self.SoundThread_instance = SoundVolume(mainwindow=self)
         self.setFixedSize(600, 400)
         self.setWindowTitle('Bullet Universe')
         self.btn_play = QPushButton('Играть', self)
@@ -409,6 +421,8 @@ class Menu(QMainWindow):
 
     def play(self):
         self.close()
+        self.SoundThread_instance.start()
+        pygame.time.delay(2000)
         game()
 
     def settings(self):
