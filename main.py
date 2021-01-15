@@ -235,7 +235,7 @@ class Sounds:
 
 
 sounds = Sounds()
-pygame.mixer.music.load('data/sounds/cyberpunk1_22.mp3')
+pygame.mixer.music.load('data/sounds/cyberpunk1_22.wav')
 pygame.mixer.music.play(-1)
 
 size = width, height = 800, 600
