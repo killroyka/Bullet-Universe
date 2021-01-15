@@ -476,6 +476,7 @@ class Player(pygame.sprite.Sprite):
     image = load_image("hero_sprites/hero_1_1.png")
 
     def __init__(self, pos_x, pos_y, angle, group):
+        self.score = 100
         super().__init__(group, all_sprites)
         self.hp = 100
         self.dmg = 10
@@ -559,6 +560,9 @@ class Player(pygame.sprite.Sprite):
         screen.blit(text_xp, (width // 2 - (text_xp.get_rect().width // 2), height - (height // 40 * 2)))
         screen.blit(text_money, (0, height // 2))
 
+    def get_score(self):
+        return self.score
+
     def update(self):
         self.draw_hp_reloading()
         if self.xp >= 100:
@@ -615,8 +619,8 @@ class Player(pygame.sprite.Sprite):
 
 class Sounds:
     def __init__(self):
-        pygame.init()
         self.volume = 100
+        pygame.init()
         shotgun_shot_sound_file = "data/sounds/shot.wav"
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
@@ -637,7 +641,15 @@ class Sounds:
         pygame.mixer.music.set_volume(value / 100)
 
     def get_volume(self):
+        print(self.volume)
         return self.volume
+
+
+sounds = Sounds()
+pygame.mixer.music.load('data/sounds/soundtrack.wav')
+pygame.mixer.music.play(-1)
+
+size = width, height = 800, 600
 
 
 def game():
@@ -714,12 +726,20 @@ def game():
 
 
     #TODO game over
+    gun = ShotGun('magnum.png', player.rect.centerx, player.rect.centery, guns_sprites)
     while True:
         screen.fill("black")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    next_window = MenuInGame()
+                    next_window.show()
+                if event.key == pygame.K_e:
+                    next_window = SkillTree()
+                    next_window.show()
+
                 if event.key == pygame.K_e:
                     skills_tree.enable()
                     skills_tree.mainloop(screen)
@@ -797,19 +817,93 @@ class Menu(QMainWindow):
 
     def initUI(self):
         self.setFixedSize(600, 400)
-        self.setWindowTitle('Фокус со словами')
+        self.setWindowTitle('Bullet Universe')
         self.btn_play = QPushButton('Играть', self)
         self.btn_play.resize(200, 40)
-        self.btn_play.move(10, 20)
+        self.btn_play.move(200, 100)
         self.btn_play.clicked.connect(self.play)
+        self.btn_play.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }""")
+        self.btn_FAQ = QPushButton('Как играть', self)
+        self.btn_FAQ.resize(200, 40)
+        self.btn_FAQ.clicked.connect(self.FAQ)
+        self.btn_FAQ.move(200, 200)
+        self.btn_FAQ.setStyleSheet("""QPushButton:!hover
+                                {
+                                background-color: blue;
+                                border-style: outset;
+                                border-radius: 15px;
+                                font: bold 20px;
+                                color: white;
+                                }
+                                QPushButton:hover
+                                {
+                                background-color: purple;
+                                border-style: outset;
+                                border-radius: 15px;
+                                font: bold 20px;
+                                color: white;
+                                }""")
         self.btn_settings = QPushButton('Настройки', self)
         self.btn_settings.resize(200, 40)
-        self.btn_settings.move(10, 70)
+        self.btn_settings.move(200, 150)
         self.btn_settings.clicked.connect(self.settings)
+        self.btn_settings.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }""")
         self.btn_exit = QPushButton('Выйти', self)
         self.btn_exit.resize(200, 40)
-        self.btn_exit.move(10, 120)
+        self.btn_exit.move(200, 250)
         self.btn_exit.clicked.connect(self.exit)
+        self.btn_exit.setStyleSheet("""QPushButton:!hover
+                        {
+                        background-color: blue;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        QPushButton:hover
+                        {
+                        background-color: purple;
+                        border-style: outset;
+                        border-radius: 15px;
+                        font: bold 20px;
+                        color: white;
+                        }
+                        """)
+
+    def FAQ(self):
+        self.next_window = FAQ()
+        self.next_window.show()
+        self.close()
 
     def play(self):
         self.close()
@@ -826,21 +920,76 @@ class Menu(QMainWindow):
 
 class Settings(QDialog):
     def __init__(self, parent=None):
-        self.sounds = Sounds()
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
         self.setWindowTitle('Настройки')
         self.setFixedSize(400, 300)
         self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.setText("Громкость:" + " " + str(sounds.get_volume()) + "%")
         self.sound_label.move(20, 40)
         self.slider_sound = QSlider(Qt.Horizontal, self)
         self.slider_sound.setGeometry(30, 70, 200, 30)
         self.slider_sound.setMinimum(0)
         self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
+        self.slider_sound.setStyleSheet('QSlider::groove:horizontal {\n'
+                                        'border: 1px solid #bbb;\n'
+                                        'background: white;\n'
+                                        'height: 18px;\n'
+                                        'border-radius: 4px;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::sub-page:horizontal {\n'
+                                        'background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,\n'
+                                        '    stop: 0 #66e, stop: 1 #bbf);\n'
+                                        'background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,\n'
+                                        '    stop: 0 #bbf, stop: 1 #55f);\n'
+                                        'border: 1px solid #777;\n'
+                                        'height: 18px;\n'
+                                        'border-radius: 4px;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::add-page:horizontal {\n'
+                                        'background: #fff;\n'
+                                        'border: 1px solid #777;\n'
+                                        'height: 18px;\n'
+                                        'border-radius: 4px;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::handle:horizontal {\n'
+                                        'background: qlineargradient(x1:0, y1:0, x2:1, y2:1,\n'
+                                        '    stop:0 #eee, stop:1 #ccc);\n'
+                                        'border: 1px solid #777;\n'
+                                        'width: 20px;\n'
+                                        'margin-top: -2px;\n'
+                                        'margin-bottom: -2px;\n'
+                                        'border-radius: 4px;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::handle:horizontal:hover {\n'
+                                        'background: qlineargradient(x1:0, y1:0, x2:1, y2:1,\n'
+                                        '    stop:0 #fff, stop:1 #ddd);\n'
+                                        'border: 1px solid #444;\n'
+                                        'border-radius: 4px;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::sub-page:horizontal:disabled {\n'
+                                        'background: #bbb;\n'
+                                        'border-color: #999;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::add-page:horizontal:disabled {\n'
+                                        'background: #eee;\n'
+                                        'border-color: #999;\n'
+                                        '}\n'
+                                        '\n'
+                                        'QSlider::handle:horizontal:disabled {\n'
+                                        'background: #eee;\n'
+                                        'border: 1px solid #aaa;\n'
+                                        'border-radius: 4px;\n'
+                                        '}')
         self.resolutions_label = QLabel(self)
         self.resolutions_label.setText("Разрешение:")
         self.resolutions_label.move(20, 120)
@@ -861,7 +1010,7 @@ class Settings(QDialog):
     def volume_changed(self, value):
         s = "Громкость:" + " " + str(value) + "%"
         self.sound_label.setText(s)
-        self.sounds.set_volume(value)
+        sounds.set_volume(value)
 
     def go_back(self):
         self.next_window = Menu()
@@ -870,25 +1019,24 @@ class Settings(QDialog):
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
+            self.go_back()
 
 
 class MenuInGame(QDialog):
     def __init__(self, parent=None):
-        self.sounds = Sounds()
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
-        self.setWindowTitle('Настройки')
+        self.setWindowTitle('Меню')
         self.setFixedSize(400, 300)
         self.sound_label = QLabel(self)
-        self.sound_label.setText("Громкость:" + " " + str(self.sounds.get_volume()) + "%")
+        self.sound_label.setText("Громкость:" + " " + str(sounds.get_volume()) + "%")
         self.sound_label.move(20, 40)
         self.slider_sound = QSlider(Qt.Horizontal, self)
         self.slider_sound.setGeometry(30, 70, 200, 30)
         self.slider_sound.setMinimum(0)
         self.slider_sound.setMaximum(100)
-        self.slider_sound.setValue(self.sounds.get_volume())
+        self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
         self.button_exit = QPushButton("Выйти", self)
         self.button_exit.move(145, 150)
@@ -900,14 +1048,34 @@ class MenuInGame(QDialog):
     def volume_changed(self, value):
         s = "Громкость:" + " " + str(value) + "%"
         self.sound_label.setText(s)
-        self.sounds.set_volume(value)
+        sounds.set_volume(value)
 
     def go_back(self):
         self.close()
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
-            self.close()
+            self.go_back()
+
+
+class FAQ(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(300, 300)
+        self.setWindowTitle('Как играть')
+        self.button_go_back = QPushButton('Назад', self)
+        self.button_go_back.clicked.connect(self.go_back)
+        self.how_to_label = QLabel(self)
+        self.how_to_label.setText()
+
+    def go_back(self):
+        self.next_window = Menu()
+        self.next_window.show()
+        self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.go_back()
 
 
 if __name__ == '__main__':
