@@ -760,7 +760,7 @@ def game():
     #  ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
     #  SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
     #  WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
-    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_BLUE, columns=3, rows=5)
+    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_DARK, columns=3, rows=5)
     Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
 
     Shop.add_button("ShotGun. 500$", player.add_gun, 1, align=pygame_menu.locals.ALIGN_CENTER)
