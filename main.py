@@ -12,6 +12,7 @@ from PyQt5.QtCore import Qt
 from pygame import mixer
 from sounds import *
 import pygame_menu
+
 '''
 #    #     #    #       #       #####    ####    #   #  #    #    ##
 #   #      #    #       #       #    #  #    #    # #   #   #    #  #
@@ -30,12 +31,15 @@ import pygame_menu
 '''
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
+
 def cheats(type):
     print(type, "<<<<<<<<")
     if "money" in type:
         player.money += 1000
     if type == "XP":
         player.xp += 1000
+
+
 class Gun(pygame.sprite.Sprite):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group)
@@ -51,6 +55,7 @@ class Gun(pygame.sprite.Sprite):
         self.name = 'gun'
         self.ammo = 48
         self.font = pygame.font.Font(None, 25)
+
     def add_bullets(self, a, type):
         bullet_lable.set_title("buy bullets")
 
@@ -123,13 +128,13 @@ class ShotGun(Gun):
         self.ammo = 20
         self.name = 'shotgun'
 
-
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 1
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
+
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
@@ -155,6 +160,7 @@ class SpinGun(Gun):
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
+
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
@@ -173,13 +179,13 @@ class WallGun(Gun):
         self.ammo = 12
         self.name = 'wallgun'
 
-
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 0.5
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
+
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
@@ -545,7 +551,6 @@ class Player(pygame.sprite.Sprite):
             guns_eneble[3] = 1
         your_money.set_title("your money" + str(player.money) + " $")
 
-
     def draw_hp_reloading(self):
         self.print_aneble_skills(level_lable, skills_tree)
         font = pygame.font.Font(None, 50)
@@ -553,7 +558,8 @@ class Player(pygame.sprite.Sprite):
         text_xp = font.render("XP" + " " + str(self.xp), True, (255, 130, 133))
         text_money = font.render(str(self.money) + " $", True, (64, 227, 0))
         pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
-        pygame.draw.rect(screen, (0, 109, 255), (width // 2, 0, guns[player.gun_type].reloading * width // 200, height // 40))
+        pygame.draw.rect(screen, (0, 109, 255),
+                         (width // 2, 0, guns[player.gun_type].reloading * width // 200, height // 40))
 
         pygame.draw.rect(screen, (6, 130, 133), (0, height - height // 40, self.xp * width // 100, height // 40))
         screen.blit(text_hp, (width // 4, height // 80))
@@ -698,7 +704,7 @@ def game():
     #  ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
     #  SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
     #  WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
-    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE, columns=3, rows = 5)
+    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE, columns=3, rows=5)
     Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
 
     Shop.add_button("ShotGun. 500$", player.add_gun, 1, align=pygame_menu.locals.ALIGN_CENTER)
@@ -708,25 +714,28 @@ def game():
 
     bullet_lable = Shop.add_label("buy bullets", align=pygame_menu.locals.ALIGN_CENTER)
 
-    Shop.add_button("Gun_ammo. 30$/24b", guns[player.gun_type].add_bullets, 24, 1, align=pygame_menu.locals.ALIGN_CENTER)
-    Shop.add_button("ShotGun_ammo. 60$/10b", guns[player.gun_type].add_bullets, 10, 2, align=pygame_menu.locals.ALIGN_CENTER)
-    Shop.add_button("SpinGun_ammo. 120$/ 14b", guns[player.gun_type].add_bullets, 14, 3, align=pygame_menu.locals.ALIGN_CENTER)
-    Shop.add_button("SniperRifle_ammo. 150$/6b", guns[player.gun_type].add_bullets, 6, 4, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("Gun_ammo. 30$/24b", guns[player.gun_type].add_bullets, 24, 1,
+                    align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("ShotGun_ammo. 60$/10b", guns[player.gun_type].add_bullets, 10, 2,
+                    align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SpinGun_ammo. 120$/ 14b", guns[player.gun_type].add_bullets, 14, 3,
+                    align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SniperRifle_ammo. 150$/6b", guns[player.gun_type].add_bullets, 6, 4,
+                    align=pygame_menu.locals.ALIGN_CENTER)
     Shop.add_label("buy ultimate", align=pygame_menu.locals.ALIGN_RIGHT)
 
     Shop_exit_button = Shop.add_button("exit", Shop.disable, align=pygame_menu.locals.ALIGN_CENTER)
     Shop_exit_button.set_background_color((255, 0, 0))
     Shop_exit_button.set_position(200, 200)
 
-    Cheat_menu = pygame_menu.Menu(height, width, "да ты хацкер", theme=pygame_menu.themes.THEME_ORANGE, columns=2, rows = 2)
+    Cheat_menu = pygame_menu.Menu(height, width, "да ты хацкер", theme=pygame_menu.themes.THEME_ORANGE, columns=2,
+                                  rows=2)
     Cheat_exit_button = Cheat_menu.add_button("exit", Cheat_menu.disable, align=pygame_menu.locals.ALIGN_CENTER)
     Cheat_exit_button.set_background_color((255, 0, 0))
     Cheat_menu.add_button("+money", cheats, "money")
     Cheat_menu.add_button("+XP", cheats, "XP")
 
-
-    #TODO game over
-    gun = ShotGun('magnum.png', player.rect.centerx, player.rect.centery, guns_sprites)
+    # TODO game over
     while True:
         screen.fill("black")
         for event in pygame.event.get():
@@ -737,8 +746,7 @@ def game():
                     next_window = MenuInGame()
                     next_window.show()
                 if event.key == pygame.K_e:
-                    next_window = SkillTree()
-                    next_window.show()
+                    skills_tree.enable()
 
                 if event.key == pygame.K_e:
                     skills_tree.enable()
@@ -773,7 +781,8 @@ def game():
                     Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
                     j -= 1
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed * guns[
-            player.gun_type].shoot_speed and player.shoot_speed != 0:
+            player.gun_type].shoot_speed and player.shoot_speed * guns[
+            player.gun_type].shoot_speed != 0:
             guns[player.gun_type].shot()
             sounds.shotgun_shot()
             shot_timer = 0
