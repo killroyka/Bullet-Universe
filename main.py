@@ -56,6 +56,7 @@ class Gun(pygame.sprite.Sprite):
         self.ammo = 48
         self.font = pygame.font.Font(None, 25)
 
+
     def add_bullets(self, a, type):
         bullet_lable.set_title("buy bullets")
 
@@ -94,10 +95,12 @@ class Gun(pygame.sprite.Sprite):
         if self.mag > 0:
             self.mag -= 1
             Bullet(player.rect.centerx, player.rect.centery, player.angle, bullet_sprites, 25, "player")
+            sounds.shot((self.name + "_shot.wav"))
 
     def reload(self):
         if self.mag != 12 and self.ammo != 0:
             self.reloading = 0
+            sounds.reload(self.name + "_reload.wav")
         if self.ammo > 0 and self.ammo >= (self.mag_cargo - self.mag):
             self.ammo = self.ammo - (self.mag_cargo - self.mag)
             self.mag = self.mag_cargo
@@ -421,8 +424,37 @@ class Spin_bot(Enemy):
             self.speed = 5
         elif self.images.index(self.image) == 0:
             self.speed = 10
-        if timer % 50 == 0 and self.collision[0] and self.rast < 450:
+        if timer % 50 == 0 and self.collision[0] and self.rast < 500:
             self.circle_shoot()
+
+
+class Friend(Spin_bot):
+    def __init__(self, pos_x, pos_y, group, player, speed=10):
+        super().__init__(pos_x, pos_y, group, player, speed)
+        self.image = load_image("spinbotAnimation/Friend.png")
+        self.images = [load_image("spinbotAnimation/Friend.png"),
+                       load_image("spinbotAnimation/Friend.png"),
+                       load_image("spinbotAnimation/Friend.png")]
+
+    def transform(self):
+        pass
+
+    def circle_shoot(self):
+        for x in range(0, 13, 1):
+            Bullet(self.rect.centerx + 40 * math.cos(x / 2), self.rect.centery + 40 * math.sin(x / 2),
+                   self.angle + x * 10,
+                   bullet_sprites, 10,
+                   "player")
+
+    def update(self, player):
+        self.rast = ((player.rect.centerx - self.rect.centerx) ** 2 + (
+                player.rect.centery - self.rect.centery) ** 2) ** 0.5
+        if timer % 50 == 0:
+            self.circle_shoot()
+        self.get_angle()
+        if self.rast > 200:
+            self.rect.x += self.speed * math.cos(self.angle)
+            self.rect.y += self.speed * math.sin(self.angle)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -458,6 +490,12 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         self.rect.x += self.cos
         self.rect.y += self.sin
+
+
+def make_friend():
+    if player.money >= 1500:
+        Friend(player.rect.x, player.rect.y, friend_sprites, player)
+        player.money -= 1500
 
 
 class Camera:
@@ -623,7 +661,7 @@ class Player(pygame.sprite.Sprite):
             self.image = self.images[(timer // 10) % 3][2]
 
 
-class Sounds:
+class Sounds():
     def __init__(self):
         self.volume = 100
         pygame.init()
@@ -631,16 +669,23 @@ class Sounds:
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
 
-    def shotgun_shot(self):
-        shotgun_shot_sound_file = "data/sounds/shot.wav"
+    def shot(self, file):
+        shotgun_shot_sound_file = "data/sounds/" + file
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+        return self.shotgun_shot_sound.play()
+    def not_enoght_ammo(self):
+        shotgun_shot_sound_file = "data/sounds/not_enoght_ammo.wav"
+        self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
+        self.shotgun_shot_sound.set_volume(self.volume)
+        return self.shotgun_shot_sound.play()
+    def reload(self, file):
+        shotgun_shot_sound_file = "data/sounds/" + file
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
         return self.shotgun_shot_sound.play()
 
-    # def hit(self):
-    #     hit_sound_file = "data/sounds/hit.wav"
-    #     hit_sound = mixer.Sound(hit_sound_file)
-    #     return hit_sound.play()
+
     def set_volume(self, value):
         self.volume = value
         self.shotgun_shot_sound.set_volume(value / 100)
@@ -659,7 +704,7 @@ size = width, height = 800, 600
 
 
 def game():
-    global your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
+    global friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
     size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
@@ -723,6 +768,7 @@ def game():
     Shop.add_button("SniperRifle_ammo. 150$/6b", guns[player.gun_type].add_bullets, 6, 4,
                     align=pygame_menu.locals.ALIGN_CENTER)
     Shop.add_label("buy ultimate", align=pygame_menu.locals.ALIGN_RIGHT)
+    Shop.add_button("Friend_bot/ 1500", make_friend, align=pygame_menu.locals.ALIGN_CENTER)
 
     Shop_exit_button = Shop.add_button("exit", Shop.disable, align=pygame_menu.locals.ALIGN_CENTER)
     Shop_exit_button.set_background_color((255, 0, 0))
@@ -734,6 +780,7 @@ def game():
     Cheat_exit_button.set_background_color((255, 0, 0))
     Cheat_menu.add_button("+money", cheats, "money")
     Cheat_menu.add_button("+XP", cheats, "XP")
+    friend_sprites = pygame.sprite.Group()
 
     # TODO game over
     while True:
@@ -765,6 +812,7 @@ def game():
                     player.gun_type = (player.gun_type + 1) % len(guns)
         timer += 1
         all_sprites.draw(screen)
+        friend_sprites.update(player)
         player_sprites.update()
         camera.update(player)
         bullet_sprites.update()
@@ -783,8 +831,9 @@ def game():
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed * guns[
             player.gun_type].shoot_speed and player.shoot_speed * guns[
             player.gun_type].shoot_speed != 0:
+            if guns[player.gun_type].mag <= 0:
+                sounds.not_enoght_ammo()
             guns[player.gun_type].shot()
-            sounds.shotgun_shot()
             shot_timer = 0
         shot_timer += 1
         for x in bullet_sprites:
