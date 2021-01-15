@@ -83,6 +83,8 @@ class Gun(pygame.sprite.Sprite):
                 bullet_lable.set_title("У тебя нет этого оружия")
         else:
             bullet_lable.set_title("Not enoght money")
+        your_money.set_title("your money" + str(player.money) + " $")
+
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
@@ -350,9 +352,9 @@ class Enemy(pygame.sprite.Sprite):
             check = [0, 0, 0]
             ax = self.rect.centerx
             ay = self.rect.centery
-            for x in range(50):
-                ax += 60 * math.cos(self.angle)
-                ay += 60 * math.sin(self.angle)
+            for x in range(40):
+                ax += 100 * math.cos(self.angle)
+                ay += 100 * math.sin(self.angle)
                 if player.rect.collidepoint(ax, ay):
                     check[0] = 1
                     break
@@ -479,7 +481,7 @@ class Player(pygame.sprite.Sprite):
         self.dmg = 10
         self.xp = 0
         self.shoot_speed = 1
-        self.level = 100
+        self.level = 0
         self.angle, self.group = angle, group
         self.image = Player.image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
@@ -527,6 +529,7 @@ class Player(pygame.sprite.Sprite):
         widget.set_title(str(self.level))
 
     def add_gun(self, type):
+
         if type == 1 and guns_eneble[1] != 1 and self.money > 500:
             self.money -= 500
             guns.append(ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")))
@@ -539,6 +542,8 @@ class Player(pygame.sprite.Sprite):
             self.money -= 1000
             guns.append(WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png")))
             guns_eneble[3] = 1
+        your_money.set_title("your money" + str(player.money) + " $")
+
 
     def draw_hp_reloading(self):
         self.print_aneble_skills(level_lable, skills_tree)
@@ -547,9 +552,8 @@ class Player(pygame.sprite.Sprite):
         text_xp = font.render("XP" + " " + str(self.xp), True, (255, 130, 133))
         text_money = font.render(str(self.money) + " $", True, (64, 227, 0))
         pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
-        pygame.draw.rect(screen, (0, 109, 255),
-                         (width // 2, height - 100, guns[self.gun_type].reloading * width // 100, height - 80))
-        print((width // 2, height - 100, guns[self.gun_type].reloading * width // 100, height - 80))
+        pygame.draw.rect(screen, (0, 109, 255), (width // 2, 0, guns[player.gun_type].reloading * width // 200, height // 40))
+
         pygame.draw.rect(screen, (6, 130, 133), (0, height - height // 40, self.xp * width // 100, height // 40))
         screen.blit(text_hp, (width // 4, height // 80))
         screen.blit(text_xp, (width // 2 - (text_xp.get_rect().width // 2), height - (height // 40 * 2)))
@@ -637,7 +641,7 @@ class Sounds:
 
 
 def game():
-    global bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
+    global your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
     size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
@@ -688,7 +692,7 @@ def game():
     Shop.add_button("ShotGun. 500$", player.add_gun, 1, align=pygame_menu.locals.ALIGN_CENTER)
     Shop.add_button("SpinGun. 750$", player.add_gun, 2, align=pygame_menu.locals.ALIGN_CENTER)
     Shop.add_button("SniperRifle. 1000$", player.add_gun, 3, align=pygame_menu.locals.ALIGN_CENTER)
-    Shop.add_label("your_money" + str(player.money) + " $", align=pygame_menu.locals.ALIGN_CENTER)
+    your_money = Shop.add_label("your_money" + str(player.money) + " $", align=pygame_menu.locals.ALIGN_CENTER)
 
     bullet_lable = Shop.add_label("buy bullets", align=pygame_menu.locals.ALIGN_CENTER)
 
@@ -731,7 +735,6 @@ def game():
                     player.gun_type = (player.gun_type - 1) % len(guns)
                 if event.button == 5:
                     player.gun_type = (player.gun_type + 1) % len(guns)
-
         timer += 1
         all_sprites.draw(screen)
         player_sprites.update()
@@ -750,7 +753,7 @@ def game():
                     Spin_bot(x * 128 + camera.ddx, y * 128 + camera.ddy, enemies_sprites, player, 10)
                     j -= 1
         if pygame.mouse.get_pressed(3)[0] and shot_timer >= player.shoot_speed * guns[
-            player.gun_type].shoot_speed and player.shoot_speed * guns[player.gun_type].shoot_speed != 0:
+            player.gun_type].shoot_speed and player.shoot_speed != 0:
             guns[player.gun_type].shot()
             sounds.shotgun_shot()
             shot_timer = 0
