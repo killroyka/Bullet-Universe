@@ -158,15 +158,14 @@ class SpinGun(Gun):
         self.mag = 7
         self.mag_cargo = 7
         self.name = 'spingun'
-
         self.ammo = 28
 
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 1
-            sounds.reload(self.name + "_reload.wav")
-
             self.shoot_speed = 0
+        elif self.reloading == 20:
+            sounds.reload(self.name + "_reload.wav")
         else:
             self.shoot_speed = 20
 
