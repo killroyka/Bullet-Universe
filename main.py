@@ -558,10 +558,10 @@ class Player(pygame.sprite.Sprite):
             self.shoot_speed -= a
             self.level -= 1
             level_lable.set_title(str(self.level))
-            level_lable.set_title("not enogh level")
 
         else:
-            pass
+            level_lable.set_title("not enogh level")
+
 
     def hp_up(self, a):
         if self.level > 0:
