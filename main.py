@@ -100,7 +100,6 @@ class Gun(pygame.sprite.Sprite):
     def reload(self):
         if self.mag != 12 and self.ammo != 0:
             self.reloading = 0
-            sounds.reload(self.name + "_reload.wav")
         if self.ammo > 0 and self.ammo >= (self.mag_cargo - self.mag):
             self.ammo = self.ammo - (self.mag_cargo - self.mag)
             self.mag = self.mag_cargo
@@ -112,6 +111,7 @@ class Gun(pygame.sprite.Sprite):
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 1
+            sounds.reload(self.name + "_reload.wav")
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
@@ -135,6 +135,8 @@ class ShotGun(Gun):
         if self.reloading != 100:
             self.reloading += 1
             self.shoot_speed = 0
+            sounds.reload(self.name + "_reload.wav")
+
         else:
             self.shoot_speed = 20
 
@@ -146,6 +148,8 @@ class ShotGun(Gun):
                        player.angle + (x * random.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])), bullet_sprites,
                        random.randint(25, 30),
                        "player")
+            sounds.shot((self.name + "_shot.wav"))
+
 
 
 class SpinGun(Gun):
@@ -160,6 +164,8 @@ class SpinGun(Gun):
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 1
+            sounds.reload(self.name + "_reload.wav")
+
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
@@ -172,6 +178,8 @@ class SpinGun(Gun):
                        player.angle,
                        bullet_sprites, 10,
                        "player")
+            sounds.shot((self.name + "_shot.wav"))
+
 
 
 class WallGun(Gun):
@@ -185,6 +193,8 @@ class WallGun(Gun):
     def reload_draw(self):
         if self.reloading != 100:
             self.reloading += 0.5
+            sounds.reload(self.name + "_reload.wav")
+
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
@@ -197,6 +207,8 @@ class WallGun(Gun):
                        player.rect.centery + x * 5 * math.sin(math.sin(player.angle)), player.angle,
                        bullet_sprites, 10,
                        "player")
+            sounds.shot((self.name + "_shot.wav"))
+
 
 
 def draw_map(map):
