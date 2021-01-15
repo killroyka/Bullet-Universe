@@ -30,7 +30,12 @@ import pygame_menu
 '''
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
-
+def cheats(type):
+    print(type, "<<<<<<<<")
+    if "money" in type:
+        player.money += 1000
+    if type == "XP":
+        player.xp += 1000
 class Gun(pygame.sprite.Sprite):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group)
@@ -43,9 +48,41 @@ class Gun(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(width - 240, height - 60)
         self.mag = 12
         self.mag_cargo = 12
+        self.name = 'gun'
         self.ammo = 48
         self.font = pygame.font.Font(None, 25)
+    def add_bullets(self, a, type):
+        bullet_lable.set_title("buy bullets")
 
+        if type == 1 and player.money > 30:
+            guns[0].ammo += a
+            player.money -= 30
+        elif type == 2 and player.money > 60:
+            for x in range(len(guns)):
+                if guns[x].name == "shotgun":
+                    guns[x].ammo += 10
+                    player.money -= 60
+                    break
+            else:
+                bullet_lable.set_title("У тебя нет этого оружия")
+        elif type == 3 and player.money > 120:
+            for x in range(len(guns)):
+                if guns[x].name == "spingun":
+                    guns[x].ammo += 14
+                    player.money -= 120
+                    break
+            else:
+                bullet_lable.set_title("У тебя нет этого оружия")
+        elif type == 4 and player.money > 150:
+            for x in range(len(guns)):
+                if guns[x].name == "wallgun":
+                    guns[x].ammo += 6
+                    player.money -= 150
+                    break
+            else:
+                bullet_lable.set_title("У тебя нет этого оружия")
+        else:
+            bullet_lable.set_title("Not enoght money")
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
@@ -81,8 +118,9 @@ class ShotGun(Gun):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
         self.mag = 5
         self.mag_cargo = 5
-
         self.ammo = 20
+        self.name = 'shotgun'
+
 
     def reload_draw(self):
         if self.reloading != 100:
@@ -105,6 +143,7 @@ class SpinGun(Gun):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
         self.mag = 7
         self.mag_cargo = 7
+        self.name = 'spingun'
 
         self.ammo = 28
 
@@ -117,7 +156,6 @@ class SpinGun(Gun):
     def shot(self):
         if self.mag > 0:
             self.mag -= 1
-
             for x in range(0, 13, 1):
                 Bullet(player.rect.centerx + 40 * math.cos(x / 2), player.rect.centery + 40 * math.sin(x / 2),
                        player.angle,
@@ -130,8 +168,9 @@ class WallGun(Gun):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
         self.mag = 3
         self.mag_cargo = 3
-
         self.ammo = 12
+        self.name = 'wallgun'
+
 
     def reload_draw(self):
         if self.reloading != 100:
@@ -448,7 +487,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 15
         self.mask = pygame.mask.from_surface(self.image)
         self.gun_type = 0
-        self.money = 0
+        self.money = 10000
         self.images = [[load_image("hero_sprites/hero_0_1.png"), load_image("hero_sprites/hero_0_2.png"),
                         load_image("hero_sprites/hero_0_3.png"), load_image("hero_sprites/hero_0_4.png")],
                        [load_image("hero_sprites/hero_1_1.png"), load_image("hero_sprites/hero_1_2.png"),
@@ -488,13 +527,16 @@ class Player(pygame.sprite.Sprite):
         widget.set_title(str(self.level))
 
     def add_gun(self, type):
-        if type == 1 and guns_eneble[1] != 1:
+        if type == 1 and guns_eneble[1] != 1 and self.money > 500:
+            self.money -= 500
             guns.append(ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")))
             guns_eneble[1] = 1
-        if type == 2 and guns_eneble[2] != 1:
+        if type == 2 and guns_eneble[2] != 1 and self.money > 750:
+            self.money -= 750
             guns.append(SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")))
             guns_eneble[2] = 1
-        if type == 3 and guns_eneble[3] != 1:
+        if type == 3 and guns_eneble[3] != 1 and self.money > 1000:
+            self.money -= 1000
             guns.append(WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png")))
             guns_eneble[3] = 1
 
@@ -503,22 +545,21 @@ class Player(pygame.sprite.Sprite):
         font = pygame.font.Font(None, 50)
         text_hp = font.render("HP" + " " + str(self.hp), True, (21, 130, 131))
         text_xp = font.render("XP" + " " + str(self.xp), True, (255, 130, 133))
-        if self.hp <= 100:
-            pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
-        else:
-            pygame.draw.rect(screen, (103, 6, 6), (0, 0, (self.hp - self.hp % 100) * width // 200, height // 40))
-            pygame.draw.rect(screen, (103, 6, 6), (0, height // 40, (self.hp - 100) * width // 200, height // 40))
+        text_money = font.render(str(self.money) + " $", True, (64, 227, 0))
+        pygame.draw.rect(screen, (103, 6, 6), (0, 0, self.hp * width // 200, height // 40))
         pygame.draw.rect(screen, (0, 109, 255),
-                         (width // 2, height - 50, guns[self.gun_type].reloading * width // 200, height - 60))
+                         (width // 2, height - 100, guns[self.gun_type].reloading * width // 100, height - 80))
+        print((width // 2, height - 100, guns[self.gun_type].reloading * width // 100, height - 80))
         pygame.draw.rect(screen, (6, 130, 133), (0, height - height // 40, self.xp * width // 100, height // 40))
         screen.blit(text_hp, (width // 4, height // 80))
         screen.blit(text_xp, (width // 2 - (text_xp.get_rect().width // 2), height - (height // 40 * 2)))
+        screen.blit(text_money, (0, height // 2))
 
     def update(self):
         self.draw_hp_reloading()
         if self.xp >= 100:
-            self.level += 1
-            self.xp = 0
+            self.level += self.xp // 100
+            self.xp = self.xp % 100
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         rel_x, rel_y = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
@@ -596,7 +637,7 @@ class Sounds:
 
 
 def game():
-    global guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
+    global bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, size
     pygame.init()
     size = width, height = 1280, 720
     screen = pygame.display.set_mode(size)
@@ -636,23 +677,39 @@ def game():
 
     guns_eneble = [1, 0, 0, 0]
     print(ShotGun in guns)
-    # TODO написать магазин
 
     #  [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png")),
     #  ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
     #  SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
     #  WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
-    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE)
+    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE, columns=3, rows = 5)
     Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
-    Shop.add_label("buy bullets", align=pygame_menu.locals.ALIGN_CENTER)
-    Shop.add_label("buy ultimate", align=pygame_menu.locals.ALIGN_RIGHT)
-    Shop_exit_button = Shop.add_button("exit", Shop.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
-    Shop_exit_button.set_background_color((255, 0, 0))
-    Shop.add_button("ShotGun", player.add_gun, 1, align=pygame_menu.locals.ALIGN_LEFT)
-    Shop.add_button("SpinGun", player.add_gun, 2, align=pygame_menu.locals.ALIGN_LEFT)
-    Shop.add_button("SniperRifle", player.add_gun, 3, align=pygame_menu.locals.ALIGN_LEFT)
 
-    # Shop.mainloop(screen)
+    Shop.add_button("ShotGun. 500$", player.add_gun, 1, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SpinGun. 750$", player.add_gun, 2, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SniperRifle. 1000$", player.add_gun, 3, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_label("your_money" + str(player.money) + " $", align=pygame_menu.locals.ALIGN_CENTER)
+
+    bullet_lable = Shop.add_label("buy bullets", align=pygame_menu.locals.ALIGN_CENTER)
+
+    Shop.add_button("Gun_ammo. 30$/24b", guns[player.gun_type].add_bullets, 24, 1, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("ShotGun_ammo. 60$/10b", guns[player.gun_type].add_bullets, 10, 2, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SpinGun_ammo. 120$/ 14b", guns[player.gun_type].add_bullets, 14, 3, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_button("SniperRifle_ammo. 150$/6b", guns[player.gun_type].add_bullets, 6, 4, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop.add_label("buy ultimate", align=pygame_menu.locals.ALIGN_RIGHT)
+
+    Shop_exit_button = Shop.add_button("exit", Shop.disable, align=pygame_menu.locals.ALIGN_CENTER)
+    Shop_exit_button.set_background_color((255, 0, 0))
+    Shop_exit_button.set_position(200, 200)
+
+    Cheat_menu = pygame_menu.Menu(height, width, "да ты хацкер", theme=pygame_menu.themes.THEME_ORANGE, columns=2, rows = 2)
+    Cheat_exit_button = Cheat_menu.add_button("exit", Cheat_menu.disable, align=pygame_menu.locals.ALIGN_CENTER)
+    Cheat_exit_button.set_background_color((255, 0, 0))
+    Cheat_menu.add_button("+money", cheats, "money")
+    Cheat_menu.add_button("+XP", cheats, "XP")
+
+
+    #TODO game over
     while True:
         screen.fill("black")
         for event in pygame.event.get():
@@ -667,12 +724,14 @@ def game():
                     Shop.mainloop(screen)
                 if event.key == pygame.K_r:
                     guns[player.gun_type].reload()
+                if event.key == pygame.K_p:
+                    Cheat_menu.mainloop(screen)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4:
                     player.gun_type = (player.gun_type - 1) % len(guns)
                 if event.button == 5:
                     player.gun_type = (player.gun_type + 1) % len(guns)
-                print(player.gun_type)
+
         timer += 1
         all_sprites.draw(screen)
         player_sprites.update()
