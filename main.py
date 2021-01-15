@@ -5,10 +5,10 @@ import math
 from pprint import pprint
 import random
 from map import *
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QMainWindow, QSlider, QLabel, QDialog, \
-    QComboBox
-from PyQt5.QtCore import Qt, QThread
+from PyQt5 import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from pygame import mixer
 
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
@@ -235,7 +235,8 @@ class Sounds:
 
 
 sounds = Sounds()
-pygame.mixer.music.load('data/sounds/cyberpunk1_22.wav')
+pygame.mixer.music.load('data/sounds/cyberpunk1_2 (1).wav')
+
 pygame.mixer.music.play(-1)
 
 size = width, height = 800, 600
@@ -244,6 +245,8 @@ size = width, height = 800, 600
 def game():
     global all_sprites, player_sprites, bullet_sprites, timer, guns_sprites, map_sprites, enemies_sprites, camera, player, clock
     pygame.init()
+    pygame.mixer.music.load('data/sounds/cyberpunk1_22.wav')
+    pygame.mixer.music.play(-1)
     timer = 0
     shot_timer = 0
     screen = pygame.display.set_mode(size)
@@ -330,7 +333,12 @@ class Menu(QMainWindow):
 
     def initUI(self):
         self.SoundThread_instance = SoundVolume(mainwindow=self)
-        self.setFixedSize(600, 400)
+        self.setFixedSize(600, 380)
+        oImage = QImage("data/screens/screen.jpg")
+        sImage = oImage.scaled(QSize(600, 380))
+        palette = QPalette()
+        palette.setBrush(QPalette.Window, QBrush(sImage))
+        self.setPalette(palette)
         self.setWindowTitle('Bullet Universe')
         self.btn_play = QPushButton('Играть', self)
         self.btn_play.resize(200, 40)
@@ -437,10 +445,16 @@ class Menu(QMainWindow):
 class Settings(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.button_go_back = QPushButton("Назад", self)
         self.button_go_back.clicked.connect(self.go_back)
         self.setWindowTitle('Настройки')
         self.setFixedSize(400, 300)
+        oImage = QImage("data/screens/screen.jpg")
+        sImage = oImage.scaled(QSize(400, 300))
+        palette = QPalette()
+        palette.setBrush(QPalette.Window, QBrush(sImage))
+        self.setPalette(palette)
         self.sound_label = QLabel(self)
         self.sound_label.setText("Громкость:" + " " + str(sounds.get_volume()) + "%")
         self.sound_label.move(20, 40)
@@ -450,62 +464,62 @@ class Settings(QDialog):
         self.slider_sound.setMaximum(100)
         self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
-        self.slider_sound.setStyleSheet('QSlider::groove:horizontal {\n'
-                                        'border: 1px solid #bbb;\n'
-                                        'background: white;\n'
-                                        'height: 18px;\n'
-                                        'border-radius: 4px;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::sub-page:horizontal {\n'
-                                        'background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,\n'
-                                        '    stop: 0 #66e, stop: 1 #bbf);\n'
-                                        'background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,\n'
-                                        '    stop: 0 #bbf, stop: 1 #55f);\n'
-                                        'border: 1px solid #777;\n'
-                                        'height: 18px;\n'
-                                        'border-radius: 4px;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::add-page:horizontal {\n'
-                                        'background: #fff;\n'
-                                        'border: 1px solid #777;\n'
-                                        'height: 18px;\n'
-                                        'border-radius: 4px;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::handle:horizontal {\n'
-                                        'background: qlineargradient(x1:0, y1:0, x2:1, y2:1,\n'
-                                        '    stop:0 #eee, stop:1 #ccc);\n'
-                                        'border: 1px solid #777;\n'
-                                        'width: 20px;\n'
-                                        'margin-top: -2px;\n'
-                                        'margin-bottom: -2px;\n'
-                                        'border-radius: 4px;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::handle:horizontal:hover {\n'
-                                        'background: qlineargradient(x1:0, y1:0, x2:1, y2:1,\n'
-                                        '    stop:0 #fff, stop:1 #ddd);\n'
-                                        'border: 1px solid #444;\n'
-                                        'border-radius: 4px;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::sub-page:horizontal:disabled {\n'
-                                        'background: #bbb;\n'
-                                        'border-color: #999;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::add-page:horizontal:disabled {\n'
-                                        'background: #eee;\n'
-                                        'border-color: #999;\n'
-                                        '}\n'
-                                        '\n'
-                                        'QSlider::handle:horizontal:disabled {\n'
-                                        'background: #eee;\n'
-                                        'border: 1px solid #aaa;\n'
-                                        'border-radius: 4px;\n'
-                                        '}')
+        self.slider_sound.setStyleSheet('''QSlider::groove:horizontal {
+border: 1px solid #bbb;
+background: white;
+height: 10px;
+border-radius: 4px;
+}
+
+QSlider::sub-page:horizontal {
+background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
+    stop: 0 #66e, stop: 1 #bbf);
+background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
+    stop: 0 #bbf, stop: 1 #55f);
+border: 1px solid #777;
+height: 10px;
+border-radius: 4px;
+}
+
+QSlider::add-page:horizontal {
+background: #fff;
+border: 1px solid #777;
+height: 10px;
+border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+    stop:0 #eee, stop:1 #ccc);
+border: 1px solid #777;
+width: 13px;
+margin-top: -2px;
+margin-bottom: -2px;
+border-radius: 4px;
+}
+
+QSlider::handle:horizontal:hover {
+background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+    stop:0 #fff, stop:1 #ddd);
+border: 1px solid #444;
+border-radius: 4px;
+}
+
+QSlider::sub-page:horizontal:disabled {
+background: #bbb;
+border-color: #999;
+}
+
+QSlider::add-page:horizontal:disabled {
+background: #eee;
+border-color: #999;
+}
+
+QSlider::handle:horizontal:disabled {
+background: #eee;
+border: 1px solid #aaa;
+border-radius: 4px;
+}''')
         self.resolutions_label = QLabel(self)
         self.resolutions_label.setText("Разрешение:")
         self.resolutions_label.move(20, 120)
