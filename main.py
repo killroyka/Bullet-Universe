@@ -31,7 +31,15 @@ import pygame_menu
 '''
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
 
-
+''' _______________________
+< начнем комментировать >
+ -----------------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+'''
 def cheats(type):
     print(type, "<<<<<<<<")
     if "money" in type:
@@ -215,9 +223,7 @@ def draw_map(map):
     corner_sprites = pygame.sprite.Group()
     for x in range(len(map) - 1):
         for y in range(len(map[0]) - 1):
-            if map[x][y] == "e":
-                Enemy(128 * y, 128 * x, enemies_sprites, player)
-            if map[x][y] == "s":
+            if map[x][y] == "s" or map[x][y] == "e":
                 Spin_bot(128 * y, 128 * x, enemies_sprites, player)
             if map[x][y] == "#" and map[x][y - 1] != "#":
                 Tile("wall_textures/side_wall.png", y, x, map_sprites, reverse_x=True)
@@ -497,10 +503,15 @@ class Bullet(pygame.sprite.Sprite):
         self.whos = whos
         self.cos = self.speed * math.cos(self.angle)
         self.sin = self.speed * math.sin(self.angle)
+        self.dlnost = 50
+        self.group = group
 
     def update(self):
         self.rect.x += self.cos
         self.rect.y += self.sin
+        self.dlnost -= 1
+        if self.dlnost <= 0:
+            self.remove(all_sprites, self.group)
 
 
 def make_friend():
@@ -761,7 +772,7 @@ def game():
     #  ShotGun(guns_sprites, player.shoot_speed, load_image("weapons/ShotGun.png")),
     #  SpinGun(guns_sprites, player.shoot_speed, load_image("weapons/SpinGun.png")),
     #  WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png"))]
-    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_ORANGE, columns=3, rows=5)
+    Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_DARK, columns=3, rows=5)
     Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
 
     Shop.add_button("ShotGun. 500$", player.add_gun, 1, align=pygame_menu.locals.ALIGN_CENTER)
@@ -833,7 +844,7 @@ def game():
         force_sprites.update()
         guns[player.gun_type].draw()
         if len(enemies_sprites.sprites()) == 0:
-            j = 3
+            j = 9
             while j > 0:
                 y = random.randint(0, len(map) - 1)
                 x = random.randint(0, len(map[0]) - 1)
