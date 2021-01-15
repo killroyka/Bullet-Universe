@@ -1178,8 +1178,6 @@ class FAQ(QDialog):
 
 
 if __name__ == '__main__':
-    pygame.mixer.music.load('data/sounds/soundtrack.wav')
-    pygame.mixer.music.play(-1)
     app = QApplication(sys.argv)
     ex = Menu()
     ex.show()
