@@ -903,9 +903,9 @@ def set_screen_resolution(value):
     global size, width, height
     size = width, height = value[0], value[1]
     print(size)
-# ДАЛЬШЕ КАМИЛЬ
 
 class SoundVolume(QThread):
+    # поток для плавного убавления громкости при входе в игру
     def __init__(self, mainwindow, parent=None):
         super().__init__()
         self.mainwindow = mainwindow
@@ -921,6 +921,7 @@ class SoundVolume(QThread):
 
 
 class Menu(QMainWindow):
+    # начальное меню
     def __init__(self):
         self.count = 0
         super().__init__()
@@ -1038,6 +1039,7 @@ class Menu(QMainWindow):
 
 
 class Settings(QDialog):
+    # окно настройки
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -1059,6 +1061,7 @@ class Settings(QDialog):
         self.slider_sound.setMaximum(100)
         self.slider_sound.setValue(sounds.get_volume())
         self.slider_sound.valueChanged.connect(self.volume_changed)
+        # стайл-щит для слайдера
         self.slider_sound.setStyleSheet('''QSlider::groove:horizontal {
 border: 1px solid #bbb;
 background: white;
@@ -1148,6 +1151,7 @@ border-radius: 4px;
 
 
 class MenuInGame(QDialog):
+    # меню в игре при нажатии на esc
     def __init__(self, parent=None):
         super().__init__(parent)
         self.button_go_back = QPushButton("Назад", self)
@@ -1184,6 +1188,7 @@ class MenuInGame(QDialog):
 
 
 class FAQ(QDialog):
+     # окно как играть
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(300, 300)
