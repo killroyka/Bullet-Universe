@@ -375,9 +375,10 @@ class Enemy(pygame.sprite.Sprite):
             check = [0, 0, 0]
             ax = self.rect.centerx
             ay = self.rect.centery
-            for x in range(40):
-                ax += 100 * math.cos(self.angle)
-                ay += 100 * math.sin(self.angle)
+            for x in range(18):
+                ax += 60 * math.cos(self.angle)
+                ay += 60 * math.sin(self.angle)
+                # pygame.draw.circle(screen,"blue", (ax, ay), 2)
                 if player.rect.collidepoint(ax, ay):
                     check[0] = 1
                     break
@@ -412,8 +413,8 @@ class Spin_bot(Enemy):
         self.form = 0
 
     def circle_shoot(self):
-        for x in range(0, 13, 1):
-            Bullet(self.rect.centerx + 40 * math.cos(x / 2), self.rect.centery + 40 * math.sin(x / 2), self.angle,
+        for x in range(0, 12, 2):
+            Bullet(self.rect.centerx + 15 * math.cos(x / 2), self.rect.centery + 15 * math.sin(x / 2), self.angle,
                    bullet_sprites, 10,
                    "enemy")
     # в зависимости от близости к игроку он меняет текстуру и начинает стрелять
@@ -429,7 +430,7 @@ class Spin_bot(Enemy):
 
     def update(self, player):
         super().update(player)
-        if self.rast < 700 and self.collision[0]:
+        if self.rast < 1000 and self.collision[0]:
             self.speed = 10
             self.form = 1
             self.transform()
@@ -441,7 +442,7 @@ class Spin_bot(Enemy):
             self.speed = 5
         elif self.images.index(self.image) == 0:
             self.speed = 10
-        if timer % 50 == 0 and self.collision[0] and self.rast < 500:
+        if timer % 50 == 0 and self.collision[0] and self.rast < 1000:
             self.circle_shoot()
 
 # клас помошника которого можно купить в магазине
@@ -545,6 +546,7 @@ class Player(pygame.sprite.Sprite):
     image = load_image("hero_sprites/hero_1_1.png")
 
     def __init__(self, pos_x, pos_y, angle, group):
+        self.max_hp = 100
         self.score = 100
         super().__init__(group, all_sprites)
         # все переменные говорят сами за себя, не мбудем их перебивать
@@ -572,7 +574,7 @@ class Player(pygame.sprite.Sprite):
         if self.level > 0:
             self.shoot_speed -= a
             self.level -= 1
-            level_lable.set_title(str(self.level))
+            level_lable.set_title(str(self.level) + " levels")
 
         else:
             level_lable.set_title("not enogh level")
@@ -580,9 +582,9 @@ class Player(pygame.sprite.Sprite):
 
     def hp_up(self, a):
         if self.level > 0:
-            self.hp += a
+            self.max_hp += a
             self.level -= 1
-            level_lable.set_title(str(self.level))
+            level_lable.set_title(str(self.level) + " levels")
 
         else:
             level_lable.set_title("not enogh level")
@@ -591,7 +593,7 @@ class Player(pygame.sprite.Sprite):
         if self.level > 0:
             self.speed += a
             self.level -= 1
-            level_lable.set_title(str(self.level))
+            level_lable.set_title(str(self.level) + " levels")
 
         else:
             level_lable.set_title("not enogh level")
@@ -734,15 +736,14 @@ pygame.mixer.music.play(-1)
 size = width, height = 800, 600
 
 # функция для основного игрового цикла
-
+def menu():
+    exit()
 def game():
-    global friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player,\
+    global play, friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player,\
         enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height,\
         size
 
     pygame.init()
-
-
     size = width, height = 1280, 720
     # спасибо камилю за трек
     pygame.mixer.music.load('data/sounds/cyberpunk1_22.wav')
@@ -774,7 +775,7 @@ def game():
     level_lable.set_position(30, 30)
     level_lable.add_update_callback(player.print_aneble_skills)
     skills_tree.add_button("shoot speed +", player.player_shoot_speed_up, 0.05, align=pygame_menu.locals.ALIGN_TOP)
-    skills_tree.add_button("self speed up + ", player.speed_up, 10, align=pygame_menu.locals.ALIGN_RIGHT)
+    skills_tree.add_button("self speed up + ", player.speed_up, 3, align=pygame_menu.locals.ALIGN_RIGHT)
 
     exit_btn = skills_tree.add_button("exit", skills_tree.disable, align=pygame_menu.locals.ALIGN_BOTTOM)
     exit_btn.set_background_color((255, 0, 0))
@@ -820,9 +821,11 @@ def game():
     game_over = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_SOLARIZED)
     game_over.disable()
     game_over.add_button("Restart", game)
-
-    # TODO game over
-    while True:
+    game_over.add_button("Exit", menu)
+    play = True
+    while play:
+        if not play:
+            exit()
         screen.fill("black")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -844,6 +847,7 @@ def game():
                     guns[player.gun_type].reload()
                 if event.key == pygame.K_p:
                     # читы только тссссс
+                    Cheat_menu.enable()
                     Cheat_menu.mainloop(screen)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # смена оружия
@@ -894,6 +898,8 @@ def game():
                     if y.hp <= 0:
                         player.xp += random.randint(30, 60)
                         player.hp += random.randint(20, 40)
+                        if player.hp > player.max_hp:
+                            player.hp = player.max_hp
                         player.money += random.randint(10, 120)
                         y.remove(all_sprites)
                         enemies_sprites.remove(y)
