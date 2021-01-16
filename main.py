@@ -560,7 +560,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 15
         self.mask = pygame.mask.from_surface(self.image)
         self.gun_type = 0
-        self.money = 10000
+        self.money = 300
         self.images = [[load_image("hero_sprites/hero_0_1.png"), load_image("hero_sprites/hero_0_2.png"),
                         load_image("hero_sprites/hero_0_3.png"), load_image("hero_sprites/hero_0_4.png")],
                        [load_image("hero_sprites/hero_1_1.png"), load_image("hero_sprites/hero_1_2.png"),
@@ -734,11 +734,15 @@ pygame.mixer.music.play(-1)
 size = width, height = 800, 600
 
 # функция для основного игрового цикла
+
 def game():
     global friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player,\
         enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height,\
         size
+
     pygame.init()
+
+
     size = width, height = 1280, 720
     # спасибо камилю за трек
     pygame.mixer.music.load('data/sounds/cyberpunk1_22.wav')
@@ -812,6 +816,10 @@ def game():
     Cheat_menu.add_button("+money", cheats, "money")
     Cheat_menu.add_button("+XP", cheats, "XP")
     friend_sprites = pygame.sprite.Group()
+
+    game_over = pygame_menu.Menu(height, width, "skills_tree", theme=pygame_menu.themes.THEME_SOLARIZED)
+    game_over.disable()
+    game_over.add_button("Restart", game)
 
     # TODO game over
     while True:
@@ -895,6 +903,11 @@ def game():
         # сдвиг камеры
         for x in all_sprites:
             camera.apply(x)
+        if player.hp <= 0:
+            game_over.enable()
+            pygame.mixer.music.load('data/sounds/game_over.wav')
+            pygame.mixer.music.play(-1)
+            game_over.mainloop(screen)
         clock.tick(60)
         pygame.display.flip()
 
