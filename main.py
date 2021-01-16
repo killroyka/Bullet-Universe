@@ -30,14 +30,16 @@ import pygame_menu
      #    ####   #    #   ####   #####    ####      #
 '''
 
-
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+
+
 def cheats(type):
     print(type, "<<<<<<<<")
     if "money" in type:
         player.money += 1000
     if type == "XP":
         player.xp += 1000
+
 
 # основной класс оружия от него наследуються все остльные
 class Gun(pygame.sprite.Sprite):
@@ -55,7 +57,6 @@ class Gun(pygame.sprite.Sprite):
         self.name = 'gun'
         self.ammo = 48
         self.font = pygame.font.Font(None, 25)
-
 
     def add_bullets(self, a, type):
         # метод покупки пуль, на вход получает тип оружия и кол во
@@ -120,12 +121,14 @@ class Gun(pygame.sprite.Sprite):
             self.shoot_speed = 0
         else:
             self.shoot_speed = 20
+
     def draw(self):
         # отрисовка колва патронов и вид оружия
         self.reload_draw()
         ammo_info = self.font.render(str(self.mag) + "/" + str(self.ammo), True, (255, 197, 157))
         screen.blit(self.image, (width - 240, height - 60))
         screen.blit(ammo_info, (width - 290, height - 60))
+
 
 # у всех остальных классов отличаеться лишь метод выстрела и перезарядки, их описывать я не буду
 class ShotGun(Gun):
@@ -156,7 +159,6 @@ class ShotGun(Gun):
             sounds.shot((self.name + "_shot.wav"))
 
 
-
 class SpinGun(Gun):
     def __init__(self, group, reload, image, pos_x=0, pos_y=0):
         super().__init__(group, reload, image, pos_x=0, pos_y=0)
@@ -183,7 +185,6 @@ class SpinGun(Gun):
                        bullet_sprites, 10,
                        "player")
             sounds.shot((self.name + "_shot.wav"))
-
 
 
 class WallGun(Gun):
@@ -245,6 +246,7 @@ def draw_map(map):
     map_sprites.add(corner_sprites)
     return map_sprites
 
+
 # функция загрузки изображения
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -255,13 +257,13 @@ def load_image(name, colorkey=None):
     image = pygame.image.load(fullname)
     return image
 
+
 # отрисовка кол-ва фпс
 def draw_FPS(screen):
     font = pygame.font.Font(None, 50)
     text = font.render(str(int(clock.get_fps())), True, (100, 255, 100))
     text_x = size[0] - text.get_width()
     screen.blit(text, (text_x, 0))
-
 
 
 # класс врагов
@@ -290,15 +292,18 @@ class Enemy(pygame.sprite.Sprite):
         print([[self.rect.x // 128], [self.rect.y // 128]])
 
         self.t = 0
+
     # расчет угра к игроку в радианах
     def get_angle(self):
         mouse_x, mouse_y = player.rect.centerx, player.rect.centery
         rel_y, rel_x = mouse_x - (self.rect.x + self.rect.size[0] // 2), mouse_y - (
                 self.rect.y + self.rect.size[1] // 2)
         self.angle = -math.atan2(rel_y, rel_x) + math.pi / 2
+
     # функция анимации
     def next_image(self):
         self.image = self.images[(self.images.index(self.image) + 1) % 3]
+
     # поиск пути
     def update_way(self):
         self.map = []
@@ -405,6 +410,7 @@ class Enemy(pygame.sprite.Sprite):
                 else:
                     self.t += 1
 
+
 # класс врага которого мы видим на игровом поле.
 # разделение было сделано чтобы было легко добавлять нвых противников
 class Spin_bot(Enemy):
@@ -417,6 +423,7 @@ class Spin_bot(Enemy):
             Bullet(self.rect.centerx + 15 * math.cos(x / 2), self.rect.centery + 15 * math.sin(x / 2), self.angle,
                    bullet_sprites, 10,
                    "enemy")
+
     # в зависимости от близости к игроку он меняет текстуру и начинает стрелять
     def transform(self):
         if self.form == 1 and self.images.index(self.image) <= 1:
@@ -444,6 +451,7 @@ class Spin_bot(Enemy):
             self.speed = 10
         if timer % 50 == 0 and self.collision[0] and self.rast < 1000:
             self.circle_shoot()
+
 
 # клас помошника которого можно купить в магазине
 # тк он наследуеться от спин бота пришлось немного костылить:)
@@ -473,6 +481,7 @@ class Friend(Spin_bot):
         if self.rast > 200:
             self.rect.x += self.speed * math.cos(self.angle)
             self.rect.y += self.speed * math.sin(self.angle)
+
 
 # класс клеточки из которых состоит все поле
 class Tile(pygame.sprite.Sprite):
@@ -516,12 +525,14 @@ class Bullet(pygame.sprite.Sprite):
         if self.dlnost <= 0:
             self.remove(all_sprites, self.group)
 
+
 # есть на вид глупые функции и методв но это необходимае мера тк
 # используеться pygame_menu и тамышние кнопки привязываються к функциям
 def make_friend():
     if player.money >= 1500:
         Friend(player.rect.x, player.rect.y, friend_sprites, player)
         player.money -= 1500
+
 
 # класс камнры, про него лучше рассказали в яндексе
 class Camera:
@@ -540,6 +551,7 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
         self.ddx += self.dx
         self.ddy += self.dy
+
 
 # класс игрока
 class Player(pygame.sprite.Sprite):
@@ -569,6 +581,7 @@ class Player(pygame.sprite.Sprite):
                         load_image("hero_sprites/hero_1_3.png"), load_image("hero_sprites/hero_1_4.png")],
                        [load_image("hero_sprites/hero_2_1.png"), load_image("hero_sprites/hero_2_2.png"),
                         load_image("hero_sprites/hero_2_3.png"), load_image("hero_sprites/hero_2_4.png")]]
+
     # следуйщие 3 функции нужны для прокачки героя
     def player_shoot_speed_up(self, a):
         if self.level > 0:
@@ -578,7 +591,6 @@ class Player(pygame.sprite.Sprite):
 
         else:
             level_lable.set_title("not enogh level")
-
 
     def hp_up(self, a):
         if self.level > 0:
@@ -597,9 +609,11 @@ class Player(pygame.sprite.Sprite):
 
         else:
             level_lable.set_title("not enogh level")
+
     # выводит кол во свободных очков прокачки
     def print_aneble_skills(self, widget, menu):
         widget.set_title(str(self.level) + " levels")
+
     # добавляет оружие в инвентарь героя в зависимости о переменной type и кол ва денег
     def add_gun(self, type):
 
@@ -616,6 +630,7 @@ class Player(pygame.sprite.Sprite):
             guns.append(WallGun(guns_sprites, player.shoot_speed, load_image("weapons/WallGun.png")))
             guns_eneble[3] = 1
         your_money.set_title("your money" + str(player.money) + " $")
+
     # отрисовака количества сдоровья опыта денег статус перезарядки
     def draw_hp_reloading(self):
         self.print_aneble_skills(level_lable, skills_tree)
@@ -692,6 +707,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x += self.speed // a
             self.image = self.images[(timer // 10) % 3][2]
 
+
 # класс хранящий метоты воиспроводящие все звуковые эфекты
 class Sounds():
     def __init__(self):
@@ -706,17 +722,18 @@ class Sounds():
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
         return self.shotgun_shot_sound.play()
+
     def not_enoght_ammo(self):
         shotgun_shot_sound_file = "data/sounds/not_enoght_ammo.wav"
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
         return self.shotgun_shot_sound.play()
+
     def reload(self, file):
         shotgun_shot_sound_file = "data/sounds/" + file
         self.shotgun_shot_sound = mixer.Sound(shotgun_shot_sound_file)
         self.shotgun_shot_sound.set_volume(self.volume)
         return self.shotgun_shot_sound.play()
-
 
     def set_volume(self, value):
         self.volume = value
@@ -735,12 +752,15 @@ pygame.mixer.music.play(-1)
 
 size = width, height = 800, 600
 
+
 # функция для основного игрового цикла
 def menu():
     exit()
+
+
 def game():
-    global play, friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player,\
-        enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height,\
+    global play, friend_sprites, your_money, bullet_lable, guns_eneble, guns, guns_sprites, force_sprites, all_sprites, player, \
+        enemies_sprites, clock, camera, bullet_sprites, timer, level_lable, screen, map_sprites, skills_tree, width, height, \
         size
 
     pygame.init()
@@ -783,7 +803,6 @@ def game():
     # "инвентарь" в котором хрангяться оружия
     guns = [Gun(guns_sprites, player.shoot_speed, load_image("weapons/gun.png"))]
     guns_eneble = [1, 0, 0, 0]
-
 
     Shop = pygame_menu.Menu(height, width, "Таки магазин", theme=pygame_menu.themes.THEME_DARK, columns=3, rows=5)
     Shop.add_label("buy weapons", align=pygame_menu.locals.ALIGN_LEFT)
@@ -917,11 +936,14 @@ def game():
         clock.tick(60)
         pygame.display.flip()
 
+
 # установка разрешения
 def set_screen_resolution(value):
     global size, width, height
     size = width, height = value[0], value[1]
     print(size)
+
+
 # ДАЛЬШЕ КАМИЛЬ
 
 class SoundVolume(QThread):
@@ -1207,10 +1229,22 @@ class FAQ(QDialog):
         super().__init__(parent)
         self.setFixedSize(300, 300)
         self.setWindowTitle('Как играть')
+        oImage = QImage("data/screens/screen.jpg")
+        sImage = oImage.scaled(QSize(400, 300))
+        palette = QPalette()
+        palette.setBrush(QPalette.Window, QBrush(sImage))
+        self.setPalette(palette)
         self.button_go_back = QPushButton('Назад', self)
         self.button_go_back.clicked.connect(self.go_back)
         self.how_to_label = QLabel(self)
-        self.how_to_label.setText()
+        self.how_to_label.move(30, 30)
+        self.how_to_label.setText("""управление:
+                                    WASD-ходьба
+                                    M-меню магазина
+                                    E-меню прокачки
+                                    R-стрельба
+                                    колесо мыши-смена орижия
+                                    ЛКМ-выстрел""")
 
     def go_back(self):
         self.next_window = Menu()
